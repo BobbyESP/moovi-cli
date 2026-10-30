@@ -3,13 +3,16 @@
 from __future__ import annotations
 
 import argparse
+import os
+import sys
 from collections.abc import Sequence
 
 from moovi import __version__
 from moovi.cli.commands import assignments, auth, courses, people
 from moovi.cli.context import build_services
+from moovi.cli.errors import print_error
 from moovi.cli.exit_codes import exit_code_for
-from moovi.cli.render import print_error
+from moovi.cli.formats import FORMATS, create_formatter
 from moovi.domain.errors import MooviError
 from moovi.infra.settings import load_settings
 
@@ -30,7 +33,13 @@ def build_parser() -> argparse.ArgumentParser:
         "--json",
         action="store_true",
         default=argparse.SUPPRESS,
-        help="Emitir JSON (solo el JSON en stdout)",
+        help="Alias de --format json",
+    )
+    common.add_argument(
+        "--format",
+        choices=FORMATS,
+        default=argparse.SUPPRESS,
+        help="Formato de salida: table (por defecto), json o raw (CSV)",
     )
     common.add_argument(
         "--limit",
@@ -56,15 +65,40 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _resolve_format(
+    args: argparse.Namespace, parser: argparse.ArgumentParser
+) -> str:
+    chosen = getattr(args, "format", None)
+    if getattr(args, "json", False):
+        if chosen is not None and chosen != "json":
+            parser.error("--json y --format no pueden contradecirse")
+        chosen = "json"
+    return chosen or "table"
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
-    as_json = getattr(args, "json", False)
+    output_format = _resolve_format(args, parser)
     try:
+        formatter = create_formatter(output_format)
         services = build_services(load_settings())
-        return int(args.handler(args, services))
+        return int(args.handler(args, services, formatter))
     except MooviError as exc:
-        print_error(exc, as_json=as_json)
+        print_error(exc, as_json=output_format == "json")
         return exit_code_for(exc)
+    except BrokenPipeError:
+        # `moovi ... | head` cierra el pipe antes de terminar; no es un error.
+        _silence_broken_pipe()
+        return 0
     except KeyboardInterrupt:
         return 130
+
+
+def _silence_broken_pipe() -> None:
+    try:
+        devnull = os.open(os.devnull, os.O_WRONLY)
+        os.dup2(devnull, sys.stdout.fileno())
+        os.close(devnull)
+    except OSError:
+        pass

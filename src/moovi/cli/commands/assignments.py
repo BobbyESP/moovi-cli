@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 
 from moovi.cli.context import Services
-from moovi.cli.render import print_json, render_assignments
+from moovi.cli.formats.base import Formatter
 
 
 def register(
@@ -21,13 +21,12 @@ def register(
     assignments.set_defaults(handler=_assignments)
 
 
-def _assignments(args: argparse.Namespace, services: Services) -> int:
+def _assignments(
+    args: argparse.Namespace, services: Services, formatter: Formatter
+) -> int:
     items = services.assignments.list_assignments(args.course_id)
     limit = getattr(args, "limit", None)
     if limit:
         items = items[:limit]
-    if getattr(args, "json", False):
-        print_json(items)
-    else:
-        render_assignments(items)
+    formatter.assignments(items)
     return 0

@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 
 from moovi.cli.context import Services
-from moovi.cli.render import print_json, render_site_info
+from moovi.cli.formats.base import Formatter
 
 
 def register(
@@ -32,20 +32,15 @@ def register(
     whoami.set_defaults(handler=_whoami)
 
 
-def _login(args: argparse.Namespace, services: Services) -> int:
-    info = services.auth.login(force=args.force)
-    _output_info(args, info)
+def _login(
+    args: argparse.Namespace, services: Services, formatter: Formatter
+) -> int:
+    formatter.site_info(services.auth.login(force=args.force))
     return 0
 
 
-def _whoami(args: argparse.Namespace, services: Services) -> int:
-    info = services.auth.whoami()
-    _output_info(args, info)
+def _whoami(
+    args: argparse.Namespace, services: Services, formatter: Formatter
+) -> int:
+    formatter.site_info(services.auth.whoami())
     return 0
-
-
-def _output_info(args: argparse.Namespace, info) -> None:
-    if getattr(args, "json", False):
-        print_json(info)
-    else:
-        render_site_info(info)

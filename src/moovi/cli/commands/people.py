@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 
 from moovi.cli.context import Services
-from moovi.cli.render import print_json, render_participants
+from moovi.cli.formats.base import Formatter
 
 
 def register(
@@ -26,15 +26,14 @@ def register(
     students.set_defaults(handler=_students)
 
 
-def _students(args: argparse.Namespace, services: Services) -> int:
+def _students(
+    args: argparse.Namespace, services: Services, formatter: Formatter
+) -> int:
     participants = services.people.list_participants(
         args.course_id, include_email=args.emails
     )
     limit = getattr(args, "limit", None)
     if limit:
         participants = participants[:limit]
-    if getattr(args, "json", False):
-        print_json(participants)
-    else:
-        render_participants(participants, include_email=args.emails)
+    formatter.participants(participants, include_email=args.emails)
     return 0

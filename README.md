@@ -67,6 +67,9 @@ moovi courses
 moovi contents 12345
 moovi students 12345
 moovi assignments 12345
+
+# Para componer con herramientas Unix
+moovi courses --format raw | grep -i "matemáticas"
 ```
 
 ## Comandos
@@ -171,10 +174,52 @@ ID   NOMBRE       ENTREGA              CIERRE  NOTA MÁX.
 
 | Opción | Descripción |
 |---|---|
-| `--json` | Emite solo JSON por `stdout`, pensado para agentes y scripts. |
+| `--format table` | Salida legible para humanos. Es el formato por defecto. |
+| `--format json` | JSON por `stdout`, pensado para agentes y scripts. |
+| `--format raw` | CSV plano, pensado para componer con `grep`, `sort`, `cut` o `awk`. |
+| `--json` | Alias de `--format json`. |
 | `--limit N` | Limita el número de elementos de los listados. |
 
-Con `--json`, la estructura usa los nombres del dominio (`short_name`, `full_name`, `due_date`...). Los resúmenes de Moodle se devuelven tal cual, incluido el HTML; la salida de tabla los limpia.
+Con `--format json`, la estructura usa los nombres del dominio (`short_name`, `full_name`, `due_date`...). Los resúmenes de Moodle se devuelven tal cual, incluido el HTML; la salida de tabla los limpia.
+
+## Filosofía: la CLI no filtra, tú compones
+
+`moovi` no incluye `--role`, `--search` ni `--sort`. Todo eso se resuelve con `grep`, `sort`, `cut` o `jq` sobre `--format raw` o `--format json`. Así la CLI se mantiene pequeña y predecible.
+
+```bash
+# Buscar un curso por nombre
+moovi courses --format raw | grep -i "matemáticas"
+
+# Alumnado de un curso (la columna roles usa los shortname de Moodle)
+moovi students 1686 --format raw | grep ',student'
+
+# Profesorado
+moovi students 1686 --format raw | grep -E ',(editingteacher|teacher)'
+
+# Tareas ordenadas por fecha de entrega
+moovi assignments 1686 --format raw | tail -n +2 | sort -t, -k4
+
+# Quedarse solo con el shortname de los cursos
+moovi courses --format raw | tail -n +2 | cut -d, -f2
+
+# Filtro estructurado con jq
+moovi students 1686 --json \
+  | jq -r '.[] | select(any(.roles[]; .short_name == "student")) | [.id, .full_name] | @tsv'
+```
+
+`--format raw` genera CSV con cabecera, fechas ISO-8601, booleanos `true`/`false` y los roles separados por `;`. Las comas dentro de un campo se entrecomillan; para consultas complejas sobre nombres con comas, `--format json` + `jq` es más robusto que `cut`.
+
+Columnas de `--format raw`:
+
+| Comando | Columnas |
+|---|---|
+| `whoami` / `login` | `user_id, username, full_name, site_name, release, functions_count` |
+| `courses` | `id, short_name, full_name, visible, start_date` |
+| `contents` | `section_id, section_name, module_id, module_name, mod_name, visible, url` |
+| `students` | `id, full_name, roles, last_access, email` |
+| `assignments` | `id, course_id, name, due_date, cutoff_date, max_grade` |
+
+En `contents`, se genera una fila por módulo. Las secciones sin módulos aparecen con los campos de módulo vacíos. En `students`, la columna `email` existe siempre y queda vacía salvo que uses `--emails`.
 
 ## Códigos de salida
 
@@ -185,7 +230,7 @@ Con `--json`, la estructura usa los nombres del dominio (`short_name`, `full_nam
 | `3` | Error de la API o de red. |
 | `4` | Moovi ha denegado el acceso (permisos insuficientes). |
 
-Con `--json`, los errores se escriben en `stderr` como:
+Con `--format json` (o `--json`), los errores se escriben en `stderr` como:
 
 ```json
 {"error": {"type": "AuthorizationError", "code": null, "message": "..."}}

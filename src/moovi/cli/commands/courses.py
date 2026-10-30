@@ -5,11 +5,7 @@ from __future__ import annotations
 import argparse
 
 from moovi.cli.context import Services
-from moovi.cli.render import (
-    print_json,
-    render_courses,
-    render_sections,
-)
+from moovi.cli.formats.base import Formatter
 
 
 def register(
@@ -32,21 +28,18 @@ def register(
     contents.set_defaults(handler=_contents)
 
 
-def _courses(args: argparse.Namespace, services: Services) -> int:
+def _courses(
+    args: argparse.Namespace, services: Services, formatter: Formatter
+) -> int:
     courses = _limit(services.catalog.list_courses(), args)
-    if getattr(args, "json", False):
-        print_json(courses)
-    else:
-        render_courses(courses)
+    formatter.courses(courses)
     return 0
 
 
-def _contents(args: argparse.Namespace, services: Services) -> int:
-    sections = services.catalog.get_contents(args.course_id)
-    if getattr(args, "json", False):
-        print_json(sections)
-    else:
-        render_sections(sections)
+def _contents(
+    args: argparse.Namespace, services: Services, formatter: Formatter
+) -> int:
+    formatter.sections(services.catalog.get_contents(args.course_id))
     return 0
 
 

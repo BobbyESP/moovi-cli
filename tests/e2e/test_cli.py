@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import csv
+import io
 import json
 import os
 import stat
@@ -157,6 +159,87 @@ def test_assignments_json(run_cli, credentials) -> None:
     [assignment] = json.loads(result.stdout)
     assert assignment["name"] == "Práctica 1"
     assert assignment["max_grade"] == 100.0
+
+
+def test_courses_raw_csv(run_cli, credentials) -> None:
+    assert run_cli("login", extra_env=credentials).returncode == 0
+
+    result = run_cli("courses", "--format", "raw", extra_env=credentials)
+
+    assert result.returncode == 0, result.stderr
+    rows = list(csv.reader(io.StringIO(result.stdout)))
+    assert rows[0] == ["id", "short_name", "full_name", "visible", "start_date"]
+    assert rows[1][1] == "M1"
+    assert rows[2][1] == "M2"
+    assert rows[2][3] == "false"
+
+
+def test_students_raw_csv(run_cli, credentials) -> None:
+    assert run_cli("login", extra_env=credentials).returncode == 0
+
+    result = run_cli("students", "101", "--format", "raw", extra_env=credentials)
+
+    assert result.returncode == 0, result.stderr
+    rows = list(csv.reader(io.StringIO(result.stdout)))
+    assert rows[0] == ["id", "full_name", "roles", "last_access", "email"]
+    ana = next(row for row in rows if row[1] == "Ana Alumna")
+    assert ana[2] == "student"
+    assert ana[4] == ""
+
+
+def test_contents_raw_csv(run_cli, credentials) -> None:
+    assert run_cli("login", extra_env=credentials).returncode == 0
+
+    result = run_cli("contents", "101", "--format", "raw", extra_env=credentials)
+
+    assert result.returncode == 0, result.stderr
+    rows = list(csv.reader(io.StringIO(result.stdout)))
+    assert rows[0] == [
+        "section_id",
+        "section_name",
+        "module_id",
+        "module_name",
+        "mod_name",
+        "visible",
+        "url",
+    ]
+    assert any(row[4] == "forum" for row in rows[1:])
+
+
+def test_assignments_raw_csv(run_cli, credentials) -> None:
+    assert run_cli("login", extra_env=credentials).returncode == 0
+
+    result = run_cli("assignments", "101", "--format", "raw", extra_env=credentials)
+
+    assert result.returncode == 0, result.stderr
+    rows = list(csv.reader(io.StringIO(result.stdout)))
+    assert rows[0] == [
+        "id",
+        "course_id",
+        "name",
+        "due_date",
+        "cutoff_date",
+        "max_grade",
+    ]
+    assert rows[1][2] == "Práctica 1"
+
+
+def test_format_json_is_an_alias(run_cli, credentials) -> None:
+    assert run_cli("login", extra_env=credentials).returncode == 0
+
+    result = run_cli("courses", "--format", "json", extra_env=credentials)
+
+    assert result.returncode == 0, result.stderr
+    assert json.loads(result.stdout)[0]["short_name"] == "M1"
+
+
+def test_json_and_raw_format_conflict(run_cli, credentials) -> None:
+    result = run_cli(
+        "courses", "--json", "--format", "raw", extra_env=credentials
+    )
+
+    assert result.returncode == 2
+    assert "no pueden contradecirse" in result.stderr
 
 
 def test_login_without_force_reuses_token(run_cli, credentials, fake_moodle) -> None:

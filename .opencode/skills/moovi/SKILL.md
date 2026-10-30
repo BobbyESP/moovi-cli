@@ -39,7 +39,8 @@ CLI de solo lectura sobre la API oficial de Moovi. No usa scraping y no modifica
 
 ## Reglas
 
-- Usa siempre `--json` cuando vayas a procesar la salida; para mostrar al usuario puede bastar la tabla.
+- Usa `--json` (o `--format json`) cuando vayas a procesar la salida; para mostrar al usuario puede bastar la tabla.
+- No pidas filtros nuevos: usa `--format raw` (CSV) con `grep`/`sort`/`cut`/`awk`, o `--json` con `jq`. Hay ejemplos en la sección “Filosofía” del README.
 - Usa `--limit N` en listados largos.
 - No incluyas correos del alumnado salvo que el usuario lo pida: `students` los omite por defecto; `--emails` los añade.
 - No consultes datos personales que no necesites (GDPR).

@@ -49,7 +49,12 @@ src/moovi/
     ├── main.py        # parser y composition root
     ├── context.py     # build_services()
     ├── commands/      # un módulo por grupo de comandos
-    ├── render.py      # tablas, JSON, HTML → texto
+    ├── formats/       # estrategia de presentación
+    │   ├── base.py    # Protocol Formatter
+    │   ├── table.py   # tabla para humanos
+    │   ├── json.py    # JSON para agentes
+    │   └── csv.py     # raw (CSV) para grep/sort/awk
+    ├── errors.py      # errores de presentación
     └── exit_codes.py  # error de dominio → código de salida
 ```
 
@@ -63,9 +68,23 @@ Ejemplo con `moovi courses --json`:
 4. `MoodleSession` resuelve el token: `MOOVI_TOKEN` → caché → login.
 5. Si Moodle responde `invalidtoken`, la sesión hace **un** login nuevo y reintenta.
 6. `MoodleRestClient` llama a `core_enrol_get_users_courses`, mapea el JSON a `Course` y devuelve el resultado.
-7. `cli/commands/courses.py` limita la lista y `render.py` emite JSON o tabla.
+7. `cli/commands/courses.py` limita la lista y llama al `Formatter` elegido, que emite tabla, JSON o CSV.
 
 La lógica no imprime nada: los servicios devuelven objetos de dominio y la CLI decide el formato.
+
+## Formato de salida
+
+El formato es una **estrategia de presentación**, no un puerto de la arquitectura. Los casos de uso no saben si el resultado se pinta como tabla, JSON o CSV.
+
+- `cli/formats/base.py` define el `Protocol Formatter`.
+- `TableFormatter`, `JsonFormatter` y `CsvFormatter` implementan el contrato.
+- `create_formatter()` elige la implementación a partir de `--format`/`--json`.
+- Los comandos reciben el formatter ya construido; no tienen ramas por formato.
+- Una futura GUI reutilizaría `logic` y tendría su propio renderizador, sin tocar estos formatters.
+
+`--json` es un alias de `--format json`. `--format raw` genera CSV con cabecera, fechas ISO-8601, booleanos `true`/`false` y roles separados por `;`.
+
+No se añaden filtros de conveniencia (`--role`, `--search`, `--sort`): se resuelven con `grep`, `sort`, `cut`, `awk` o `jq` sobre `raw`/`json`.
 
 ## Puertos y adaptadores
 
@@ -129,7 +148,7 @@ Para añadir una función hay que hacerlo en tres sitios: la allowlist, el puert
 
 ## Tests
 
-- **Unitarios:** dominio, lógica con dobles, mapeo, parámetros, configuración y permisos del token. Incluyen el test de arquitectura.
+- **Unitarios:** dominio, lógica con dobles, mapeo, parámetros, configuración, permisos del token y formatters con `StringIO`. Incluyen el test de arquitectura.
 - **Integración:** `MoodleRestClient` contra un `ThreadingHTTPServer` local que emula `login/token.php` y `rest/server.php`.
 - **E2E:** la CLI real en subprocess contra ese servidor falso, con `HOME` y `XDG_CACHE_HOME` temporales. Comprueban login, JSON, tablas, reintento de token, permisos, códigos de salida y que el token no se filtre.
 - **Live:** `pytest -m live` con `MOOVI_E2E=1` y un `.env` real; desactivados por defecto.
@@ -142,5 +161,7 @@ Para añadir una función hay que hacerlo en tres sitios: la allowlist, el puert
 | Token en fichero `0600` | Predecible en cualquier Linux, sin depender del keyring del escritorio. |
 | Allowlist de solo lectura | Un agente no puede escalar a escrituras por error. |
 | Errores de dominio | La CLI traduce a códigos; la lógica no conoce `argparse`. |
+| Formato como estrategia de presentación | La lógica no sabe si se pinta tabla, JSON o CSV. |
+| Sin filtros de conveniencia | Se componen con `grep`/`sort`/`awk` sobre `--format raw` o `jq` sobre JSON. |
 | Moodle falso en tests | E2E deterministas y sin credenciales reales. |
 | `conda` | Entorno reproducible elegido por el usuario. |
