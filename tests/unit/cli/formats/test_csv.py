@@ -41,13 +41,14 @@ def test_courses_csv_quotes_commas_and_uses_iso_dates() -> None:
     ]
 
 
-def test_participants_csv_joins_roles_and_keeps_email_column() -> None:
+def test_participants_csv_separates_names_and_joins_roles() -> None:
     rows = render_csv(
         "participants",
         [
             Participant(
                 7,
-                "Ana, Alumna",
+                "Ana",
+                "Alumna, Jr.",
                 (Role(5, "student", ""), Role(3, "editingteacher", "")),
                 None,
                 None,
@@ -56,8 +57,15 @@ def test_participants_csv_joins_roles_and_keeps_email_column() -> None:
         include_email=False,
     )
 
-    assert rows[0] == ["id", "full_name", "roles", "last_access", "email"]
-    assert rows[1] == ["7", "Ana, Alumna", "student;editingteacher", "", ""]
+    assert rows[0] == [
+        "id",
+        "first_name",
+        "last_name",
+        "roles",
+        "last_access",
+        "email",
+    ]
+    assert rows[1] == ["7", "Ana", "Alumna, Jr.", "student;editingteacher", "", ""]
 
 
 def test_sections_csv_flattens_modules_and_keeps_empty_sections() -> None:

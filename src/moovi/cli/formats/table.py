@@ -68,14 +68,15 @@ class TableFormatter:
         *,
         include_email: bool,
     ) -> None:
-        headers = ["ID", "NOMBRE", "ROLES", "ÚLTIMO ACCESO"]
+        headers = ["ID", "NOMBRE", "APELLIDOS", "ROLES", "ÚLTIMO ACCESO"]
         if include_email:
             headers.append("EMAIL")
         rows: list[list[str]] = []
         for participant in participants:
             row = [
                 str(participant.id),
-                participant.full_name,
+                participant.first_name or "—",
+                participant.last_name or "—",
                 ", ".join(role_label(role) for role in participant.roles) or "—",
                 format_datetime(participant.last_access),
             ]

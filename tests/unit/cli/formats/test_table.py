@@ -26,24 +26,39 @@ def render(method: str, *args, **kwargs) -> str:
 
 
 def test_role_labels() -> None:
-    assert "Alumno/a" in render(
-        "participants", [Participant(7, "Ana", (STUDENT,))], include_email=False
+    text = render(
+        "participants",
+        [Participant(7, "Ana", "Alumna", (STUDENT,))],
+        include_email=False,
     )
+
+    assert "Alumno/a" in text
+    assert "NOMBRE" in text
+    assert "APELLIDOS" in text
+    assert "Ana" in text
+    assert "Alumna" in text
+
     assert "Profesor/a" in render(
-        "participants", [Participant(8, "Docente", (TEACHER,))], include_email=False
+        "participants",
+        [Participant(8, "Docente", "Uno", (TEACHER,))],
+        include_email=False,
     )
 
 
 def test_prefers_role_name() -> None:
     role = Role(10, "guestteacher", "Profesor Invitado")
     text = render(
-        "participants", [Participant(9, "Invitado", (role,))], include_email=False
+        "participants",
+        [Participant(9, "Invitado", "Docente", (role,))],
+        include_email=False,
     )
     assert "Profesor Invitado" in text
 
 
 def test_participants_email_column_only_when_requested() -> None:
-    participant = Participant(7, "Ana", (STUDENT,), None, "ana@uvigo.gal")
+    participant = Participant(
+        7, "Ana", "Alumna", (STUDENT,), None, "ana@uvigo.gal"
+    )
 
     without_email = render("participants", [participant], include_email=False)
     with_email = render("participants", [participant], include_email=True)

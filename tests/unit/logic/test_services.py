@@ -37,7 +37,12 @@ class FakeSession:
         assert course_id == 101
         return [
             Participant(
-                7, "Ana", (Role(5, "student", ""),), None, "ana@uvigo.gal"
+                7,
+                "Ana",
+                "Alumna",
+                (Role(5, "student", ""),),
+                None,
+                "ana@uvigo.gal",
             )
         ]
 
@@ -68,7 +73,7 @@ def test_people_hides_email_by_default() -> None:
     [participant] = service.list_participants(101)
 
     assert participant.email is None
-    assert participant.full_name == "Ana"
+    assert participant.full_name == "Ana Alumna"
 
 
 def test_people_can_include_email() -> None:

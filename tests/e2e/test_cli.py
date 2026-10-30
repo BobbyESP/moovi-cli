@@ -101,7 +101,12 @@ def test_students_hide_email_by_default(run_cli, credentials) -> None:
 
     assert result.returncode == 0, result.stderr
     participants = json.loads(result.stdout)
-    ana = next(item for item in participants if item["full_name"] == "Ana Alumna")
+    ana = next(
+        item
+        for item in participants
+        if item["first_name"] == "Ana" and item["last_name"] == "Alumna"
+    )
+    assert ana["full_name"] == "Ana Alumna"
     assert ana["email"] is None
     assert ana["roles"] == [{"id": 5, "short_name": "student", "name": ""}]
 
@@ -115,7 +120,11 @@ def test_students_can_include_email(run_cli, credentials) -> None:
 
     assert result.returncode == 0, result.stderr
     participants = json.loads(result.stdout)
-    ana = next(item for item in participants if item["full_name"] == "Ana Alumna")
+    ana = next(
+        item
+        for item in participants
+        if item["first_name"] == "Ana" and item["last_name"] == "Alumna"
+    )
     assert ana["email"] == "ana@uvigo.gal"
 
 
@@ -125,6 +134,8 @@ def test_students_table_shows_role_labels(run_cli, credentials) -> None:
     result = run_cli("students", "101", extra_env=credentials)
 
     assert result.returncode == 0, result.stderr
+    assert "NOMBRE" in result.stdout
+    assert "APELLIDOS" in result.stdout
     assert "Alumno/a" in result.stdout
     assert "Profesor/a" in result.stdout
 
@@ -181,10 +192,17 @@ def test_students_raw_csv(run_cli, credentials) -> None:
 
     assert result.returncode == 0, result.stderr
     rows = list(csv.reader(io.StringIO(result.stdout)))
-    assert rows[0] == ["id", "full_name", "roles", "last_access", "email"]
-    ana = next(row for row in rows if row[1] == "Ana Alumna")
-    assert ana[2] == "student"
-    assert ana[4] == ""
+    assert rows[0] == [
+        "id",
+        "first_name",
+        "last_name",
+        "roles",
+        "last_access",
+        "email",
+    ]
+    ana = next(row for row in rows if row[1] == "Ana" and row[2] == "Alumna")
+    assert ana[3] == "student"
+    assert ana[5] == ""
 
 
 def test_contents_raw_csv(run_cli, credentials) -> None:

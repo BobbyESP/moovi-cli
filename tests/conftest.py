@@ -65,6 +65,8 @@ CONTENTS: list[dict[str, Any]] = [
 PARTICIPANTS: list[dict[str, Any]] = [
     {
         "id": 7,
+        "firstname": "Ana",
+        "lastname": "Alumna",
         "fullname": "Ana Alumna",
         "roles": [
             {"roleid": 5, "name": "", "shortname": "student", "sortorder": 0}
@@ -74,6 +76,8 @@ PARTICIPANTS: list[dict[str, Any]] = [
     },
     {
         "id": 8,
+        "firstname": "Profesor",
+        "lastname": "Uno",
         "fullname": "Profesor Uno",
         "roles": [
             {

@@ -141,19 +141,24 @@ moovi students 12345 --json
 ```
 
 ```
-ID   NOMBRE        ROLES        ÚLTIMO ACCESO
----  ------------  -----------  -------------------
-7    Ana Alumna    Alumno/a     2023-11-14 22:13 UTC
-8    Profesor Uno  Profesor/a   2023-11-14 22:13 UTC
+ID   NOMBRE    APELLIDOS    ROLES        ÚLTIMO ACCESO
+---  --------  -----------  -----------  -------------------
+7    Ana       Alumna       Alumno/a     2023-11-14 22:13 UTC
+8    Profesor  Uno          Profesor/a   2023-11-14 22:13 UTC
 ```
 
-En JSON, `roles` es una lista de objetos con los datos crudos de Moodle:
+En JSON, los nombres van separados y `full_name` se calcula a partir de ellos:
 
 ```json
-"roles": [{"id": 5, "short_name": "student", "name": ""}]
+{
+  "first_name": "Ana",
+  "last_name": "Alumna",
+  "full_name": "Ana Alumna",
+  "roles": [{"id": 5, "short_name": "student", "name": ""}]
+}
 ```
 
-La CLI usa `name` si viene informado y, si no, traduce `short_name` para la tabla. Moovi deja `name` vacío en roles como `student` o `editingteacher`.
+La CLI usa `name` del rol si viene informado y, si no, traduce `short_name` para la tabla. Moovi deja `name` vacío en roles como `student` o `editingteacher`.
 
 ### `moovi assignments COURSE_ID`
 
@@ -196,6 +201,9 @@ moovi students 1686 --format raw | grep ',student'
 # Profesorado
 moovi students 1686 --format raw | grep -E ',(editingteacher|teacher)'
 
+# Alumnado ordenado por apellidos
+moovi students 1686 --format raw | tail -n +2 | sort -t, -k3
+
 # Tareas ordenadas por fecha de entrega
 moovi assignments 1686 --format raw | tail -n +2 | sort -t, -k4
 
@@ -216,7 +224,7 @@ Columnas de `--format raw`:
 | `whoami` / `login` | `user_id, username, full_name, site_name, release, functions_count` |
 | `courses` | `id, short_name, full_name, visible, start_date` |
 | `contents` | `section_id, section_name, module_id, module_name, mod_name, visible, url` |
-| `students` | `id, full_name, roles, last_access, email` |
+| `students` | `id, first_name, last_name, roles, last_access, email` |
 | `assignments` | `id, course_id, name, due_date, cutoff_date, max_grade` |
 
 En `contents`, se genera una fila por módulo. Las secciones sin módulos aparecen con los campos de módulo vacíos. En `students`, la columna `email` existe siempre y queda vacía salvo que uses `--emails`.

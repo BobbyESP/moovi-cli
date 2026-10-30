@@ -52,10 +52,17 @@ class Role:
 @dataclass(frozen=True, slots=True)
 class Participant:
     id: int
-    full_name: str
+    first_name: str
+    last_name: str
     roles: tuple[Role, ...] = ()
     last_access: datetime | None = None
     email: str | None = None
+
+    @property
+    def full_name(self) -> str:
+        return " ".join(
+            part for part in (self.first_name, self.last_name) if part
+        ).strip()
 
 
 @dataclass(frozen=True, slots=True)

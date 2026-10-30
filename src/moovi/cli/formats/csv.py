@@ -113,11 +113,12 @@ class CsvFormatter:
     ) -> None:
         del include_email  # la columna existe siempre; queda vacía sin --emails
         self._write(
-            ["id", "full_name", "roles", "last_access", "email"],
+            ["id", "first_name", "last_name", "roles", "last_access", "email"],
             [
                 [
                     str(participant.id),
-                    participant.full_name,
+                    participant.first_name,
+                    participant.last_name,
                     ";".join(role_key(role) for role in participant.roles),
                     iso_datetime(participant.last_access),
                     participant.email or "",

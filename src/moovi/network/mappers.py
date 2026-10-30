@@ -99,10 +99,15 @@ def _map_participant(item: Mapping[str, Any]) -> Participant:
         for role in item.get("roles") or ()
         if isinstance(role, Mapping)
     )
+    first_name = str(item.get("firstname") or "").strip()
+    last_name = str(item.get("lastname") or "").strip()
+    if not first_name and not last_name:
+        first_name = str(item.get("fullname") or "").strip()
     email = item.get("email")
     return Participant(
         id=int(item.get("id", 0)),
-        full_name=str(item.get("fullname", "")),
+        first_name=first_name,
+        last_name=last_name,
         roles=roles,
         last_access=timestamp(item.get("lastcourseaccess")),
         email=str(email) if email else None,

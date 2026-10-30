@@ -15,13 +15,16 @@ def render_json(method: str, *args, **kwargs):
     return json.loads(output.getvalue())
 
 
-def test_participants_keep_raw_role_objects() -> None:
+def test_participants_keep_raw_role_objects_and_derive_full_name() -> None:
     data = render_json(
         "participants",
-        [Participant(7, "Ana", (Role(5, "student", ""),), None, None)],
+        [Participant(7, "Ana", "Alumna", (Role(5, "student", ""),))],
         include_email=False,
     )
 
+    assert data[0]["first_name"] == "Ana"
+    assert data[0]["last_name"] == "Alumna"
+    assert data[0]["full_name"] == "Ana Alumna"
     assert data[0]["roles"] == [{"id": 5, "short_name": "student", "name": ""}]
 
 

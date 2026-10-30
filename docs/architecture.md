@@ -17,7 +17,7 @@ cli ──► logic ──► domain
 
 | Capa | Responsabilidad | Puede importar |
 |---|---|---|
-| `domain` | Modelos, value objects, errores e invariantes. Sin I/O. | Solo stdlib. |
+| `domain` | Modelos, value objects, errores e invariantes. Sin I/O. `Participant` guarda `first_name` y `last_name`; `full_name` es una propiedad derivada. | Solo stdlib. |
 | `logic` | Casos de uso, sesión autenticada y puertos. | `domain`, `logic`. |
 | `network` | Cliente REST de Moodle, mapeo de respuestas y errores. | `domain`, `logic`, stdlib. |
 | `infra` | Configuración (`.env`) y persistencia del token. | `domain`, `logic`, stdlib. |
