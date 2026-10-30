@@ -15,9 +15,20 @@ from moovi.domain.models import (
     Assignment,
     Course,
     Participant,
+    Role,
     Section,
     SiteInfo,
 )
+
+_ROLE_LABELS = {
+    "student": "Alumno/a",
+    "editingteacher": "Profesor/a",
+    "teacher": "Profesor/a",
+    "guestteacher": "Profesor/a invitado/a",
+    "manager": "Gestor/a",
+    "coursecreator": "Creador/a de cursos",
+    "guest": "Invitado/a",
+}
 
 _BLOCK_TAGS = frozenset(
     {
@@ -194,7 +205,7 @@ def render_participants(
         row = [
             str(participant.id),
             participant.full_name,
-            ", ".join(participant.roles) or "—",
+            ", ".join(role_label(role) for role in participant.roles) or "—",
             format_datetime(participant.last_access),
         ]
         if include_email:
@@ -219,6 +230,14 @@ def render_assignments(
     render_table(
         ["ID", "NOMBRE", "ENTREGA", "CIERRE", "NOTA MÁX."], rows, stream
     )
+
+
+def role_label(role: Role) -> str:
+    if role.name:
+        return role.name
+    if role.short_name:
+        return _ROLE_LABELS.get(role.short_name, role.short_name)
+    return f"Rol {role.id}" if role.id else "—"
 
 
 def _format_grade(value: float | None) -> str:

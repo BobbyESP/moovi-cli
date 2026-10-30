@@ -19,6 +19,7 @@ Moovi es Moodle 4.5 y expone los servicios web oficiales. No se usa scraping.
 - `accessexception` y `nopermissions` significan falta de capacidad en ese curso.
 - Las fechas son timestamps Unix en segundos; `0` significa “sin fecha”.
 - Algunos campos (`summary`) contienen HTML.
+- En `roles`, el campo `name` puede venir vacío; usa `shortname` como identificador fiable.
 
 ## Funciones usadas
 

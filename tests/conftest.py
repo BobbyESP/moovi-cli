@@ -66,10 +66,26 @@ PARTICIPANTS: list[dict[str, Any]] = [
     {
         "id": 7,
         "fullname": "Ana Alumna",
-        "roles": [{"name": "Student"}],
+        "roles": [
+            {"roleid": 5, "name": "", "shortname": "student", "sortorder": 0}
+        ],
         "lastcourseaccess": 1700000000,
         "email": "ana@uvigo.gal",
-    }
+    },
+    {
+        "id": 8,
+        "fullname": "Profesor Uno",
+        "roles": [
+            {
+                "roleid": 3,
+                "name": "",
+                "shortname": "editingteacher",
+                "sortorder": 0,
+            }
+        ],
+        "lastcourseaccess": 1700000001,
+        "email": "profesor@uvigo.gal",
+    },
 ]
 
 ASSIGNMENTS: dict[str, Any] = {

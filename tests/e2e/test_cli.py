@@ -98,9 +98,10 @@ def test_students_hide_email_by_default(run_cli, credentials) -> None:
     result = run_cli("students", "101", "--json", extra_env=credentials)
 
     assert result.returncode == 0, result.stderr
-    [participant] = json.loads(result.stdout)
-    assert participant["email"] is None
-    assert participant["roles"] == ["Student"]
+    participants = json.loads(result.stdout)
+    ana = next(item for item in participants if item["full_name"] == "Ana Alumna")
+    assert ana["email"] is None
+    assert ana["roles"] == [{"id": 5, "short_name": "student", "name": ""}]
 
 
 def test_students_can_include_email(run_cli, credentials) -> None:
@@ -111,8 +112,19 @@ def test_students_can_include_email(run_cli, credentials) -> None:
     )
 
     assert result.returncode == 0, result.stderr
-    [participant] = json.loads(result.stdout)
-    assert participant["email"] == "ana@uvigo.gal"
+    participants = json.loads(result.stdout)
+    ana = next(item for item in participants if item["full_name"] == "Ana Alumna")
+    assert ana["email"] == "ana@uvigo.gal"
+
+
+def test_students_table_shows_role_labels(run_cli, credentials) -> None:
+    assert run_cli("login", extra_env=credentials).returncode == 0
+
+    result = run_cli("students", "101", extra_env=credentials)
+
+    assert result.returncode == 0, result.stderr
+    assert "Alumno/a" in result.stdout
+    assert "Profesor/a" in result.stdout
 
 
 def test_permission_error_exit_code(run_cli, credentials, fake_moodle) -> None:

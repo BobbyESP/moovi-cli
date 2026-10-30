@@ -1,6 +1,13 @@
 from __future__ import annotations
 
-from moovi.domain.models import Assignment, Course, Participant, Section, SiteInfo
+from moovi.domain.models import (
+    Assignment,
+    Course,
+    Participant,
+    Role,
+    Section,
+    SiteInfo,
+)
 from moovi.logic.services.assignments import AssignmentService
 from moovi.logic.services.auth import AuthService
 from moovi.logic.services.catalog import CatalogService
@@ -28,7 +35,11 @@ class FakeSession:
 
     def participants(self, course_id: int) -> list[Participant]:
         assert course_id == 101
-        return [Participant(7, "Ana", ("Student",), None, "ana@uvigo.gal")]
+        return [
+            Participant(
+                7, "Ana", (Role(5, "student", ""),), None, "ana@uvigo.gal"
+            )
+        ]
 
     def assignments(self, course_ids: list[int]) -> list[Assignment]:
         assert course_ids == [101]

@@ -43,10 +43,17 @@ class Section:
 
 
 @dataclass(frozen=True, slots=True)
+class Role:
+    id: int
+    short_name: str
+    name: str = ""
+
+
+@dataclass(frozen=True, slots=True)
 class Participant:
     id: int
     full_name: str
-    roles: tuple[str, ...] = ()
+    roles: tuple[Role, ...] = ()
     last_access: datetime | None = None
     email: str | None = None
 

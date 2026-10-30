@@ -30,7 +30,7 @@ La regla se comprueba automáticamente en `tests/unit/test_architecture.py`: si 
 ```
 src/moovi/
 ├── domain/
-│   ├── models.py      # SiteInfo, Course, Section, Module, Participant, Assignment
+│   ├── models.py      # SiteInfo, Course, Section, Module, Role, Participant, Assignment
 │   ├── values.py      # Token (repr redactado)
 │   └── errors.py      # errores de dominio
 ├── logic/

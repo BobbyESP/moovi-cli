@@ -83,22 +83,55 @@ def test_maps_sections_and_modules() -> None:
     assert section.modules[0].url == "https://example.test/forum"
 
 
-def test_maps_participants() -> None:
+def test_maps_participants_with_empty_role_name() -> None:
     [participant] = map_participants(
         [
             {
                 "id": "7",
                 "fullname": "Ana",
-                "roles": [{"name": "Student"}],
+                "roles": [
+                    {
+                        "roleid": 5,
+                        "name": "",
+                        "shortname": "student",
+                        "sortorder": 0,
+                    }
+                ],
                 "lastcourseaccess": 1700000000,
                 "email": "ana@uvigo.gal",
             }
         ]
     )
 
-    assert participant.roles == ("Student",)
+    [role] = participant.roles
+    assert role.id == 5
+    assert role.short_name == "student"
+    assert role.name == ""
     assert participant.last_access is not None
     assert participant.email == "ana@uvigo.gal"
+
+
+def test_maps_participants_with_role_name() -> None:
+    [participant] = map_participants(
+        [
+            {
+                "id": 8,
+                "fullname": "Docente",
+                "roles": [
+                    {
+                        "roleid": 10,
+                        "name": "Profesor Invitado",
+                        "shortname": "guestteacher",
+                    }
+                ],
+            }
+        ]
+    )
+
+    [role] = participant.roles
+    assert role.id == 10
+    assert role.short_name == "guestteacher"
+    assert role.name == "Profesor Invitado"
 
 
 def test_maps_assignments() -> None:

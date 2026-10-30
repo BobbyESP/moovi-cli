@@ -11,6 +11,7 @@ from moovi.domain.models import (
     Course,
     Module,
     Participant,
+    Role,
     Section,
     SiteInfo,
 )
@@ -94,9 +95,9 @@ def map_participants(data: object) -> list[Participant]:
 
 def _map_participant(item: Mapping[str, Any]) -> Participant:
     roles = tuple(
-        str(role.get("name", ""))
+        _map_role(role)
         for role in item.get("roles") or ()
-        if isinstance(role, Mapping) and role.get("name")
+        if isinstance(role, Mapping)
     )
     email = item.get("email")
     return Participant(
@@ -105,6 +106,18 @@ def _map_participant(item: Mapping[str, Any]) -> Participant:
         roles=roles,
         last_access=timestamp(item.get("lastcourseaccess")),
         email=str(email) if email else None,
+    )
+
+
+def _map_role(item: Mapping[str, Any]) -> Role:
+    try:
+        role_id = int(item.get("roleid", 0) or 0)
+    except (TypeError, ValueError):
+        role_id = 0
+    return Role(
+        id=role_id,
+        short_name=str(item.get("shortname") or "").strip(),
+        name=str(item.get("name") or "").strip(),
     )
 
 

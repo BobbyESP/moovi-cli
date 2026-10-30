@@ -138,10 +138,19 @@ moovi students 12345 --json
 ```
 
 ```
-ID   NOMBRE        ROLES    ÚLTIMO ACCESO
----  ------------  -------  -------------------
-7    Ana Alumna    Student  2023-11-14 22:13 UTC
+ID   NOMBRE        ROLES        ÚLTIMO ACCESO
+---  ------------  -----------  -------------------
+7    Ana Alumna    Alumno/a     2023-11-14 22:13 UTC
+8    Profesor Uno  Profesor/a   2023-11-14 22:13 UTC
 ```
+
+En JSON, `roles` es una lista de objetos con los datos crudos de Moodle:
+
+```json
+"roles": [{"id": 5, "short_name": "student", "name": ""}]
+```
+
+La CLI usa `name` si viene informado y, si no, traduce `short_name` para la tabla. Moovi deja `name` vacío en roles como `student` o `editingteacher`.
 
 ### `moovi assignments COURSE_ID`
 
