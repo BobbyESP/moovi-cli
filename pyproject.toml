@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "moovi"
+version = "0.1.0"
+description = "CLI de solo lectura para la API de Moovi (Moodle, Universidade de Vigo)"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
+
+[project.scripts]
+moovi = "moovi.cli.main:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+markers = [
+  "live: tests contra una instancia real de Moovi (requieren .env y MOOVI_E2E=1)",
+]

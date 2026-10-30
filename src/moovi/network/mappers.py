@@ -1,0 +1,145 @@
+"""Conversión de las respuestas de Moodle a modelos de dominio."""
+
+from __future__ import annotations
+
+from collections.abc import Mapping
+from datetime import datetime, timezone
+from typing import Any
+
+from moovi.domain.models import (
+    Assignment,
+    Course,
+    Module,
+    Participant,
+    Section,
+    SiteInfo,
+)
+
+
+def timestamp(value: object) -> datetime | None:
+    try:
+        seconds = int(value)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return None
+    if seconds <= 0:
+        return None
+    return datetime.fromtimestamp(seconds, tz=timezone.utc)
+
+
+def map_site_info(data: Mapping[str, Any]) -> SiteInfo:
+    functions: list[str] = []
+    for function in data.get("functions") or ():
+        if isinstance(function, Mapping):
+            name = function.get("name")
+            if name:
+                functions.append(str(name))
+        else:
+            functions.append(str(function))
+    return SiteInfo(
+        user_id=int(data.get("userid", 0)),
+        username=str(data.get("username", "")),
+        full_name=str(data.get("fullname", "")),
+        site_name=str(data.get("sitename", "")),
+        release=str(data.get("release", "")),
+        functions=tuple(functions),
+    )
+
+
+def map_courses(data: object) -> list[Course]:
+    return [_map_course(item) for item in _items(data)]
+
+
+def _map_course(item: Mapping[str, Any]) -> Course:
+    return Course(
+        id=int(item.get("id", 0)),
+        short_name=str(item.get("shortname", "")),
+        full_name=str(item.get("fullname", "")),
+        visible=bool(item.get("visible", 1)),
+        start_date=timestamp(item.get("startdate")),
+    )
+
+
+def map_sections(data: object) -> list[Section]:
+    return [_map_section(item) for item in _items(data)]
+
+
+def _map_section(item: Mapping[str, Any]) -> Section:
+    modules = tuple(
+        _map_module(module)
+        for module in item.get("modules") or ()
+        if isinstance(module, Mapping)
+    )
+    return Section(
+        id=int(item.get("id", 0)),
+        name=str(item.get("name", "")),
+        summary=str(item.get("summary", "")),
+        modules=modules,
+    )
+
+
+def _map_module(item: Mapping[str, Any]) -> Module:
+    url = item.get("url")
+    return Module(
+        id=int(item.get("id", 0)),
+        name=str(item.get("name", "")),
+        mod_name=str(item.get("modname", "")),
+        visible=bool(item.get("visible", 1)),
+        url=str(url) if url else None,
+    )
+
+
+def map_participants(data: object) -> list[Participant]:
+    return [_map_participant(item) for item in _items(data)]
+
+
+def _map_participant(item: Mapping[str, Any]) -> Participant:
+    roles = tuple(
+        str(role.get("name", ""))
+        for role in item.get("roles") or ()
+        if isinstance(role, Mapping) and role.get("name")
+    )
+    email = item.get("email")
+    return Participant(
+        id=int(item.get("id", 0)),
+        full_name=str(item.get("fullname", "")),
+        roles=roles,
+        last_access=timestamp(item.get("lastcourseaccess")),
+        email=str(email) if email else None,
+    )
+
+
+def map_assignments(data: object) -> list[Assignment]:
+    if not isinstance(data, Mapping):
+        return []
+    assignments: list[Assignment] = []
+    for course in data.get("courses") or ():
+        if not isinstance(course, Mapping):
+            continue
+        course_id = int(course.get("id", 0))
+        for item in course.get("assignments") or ():
+            if isinstance(item, Mapping):
+                assignments.append(_map_assignment(item, course_id))
+    return assignments
+
+
+def _map_assignment(item: Mapping[str, Any], course_id: int) -> Assignment:
+    raw_grade = item.get("grade")
+    max_grade: float | None
+    try:
+        max_grade = float(raw_grade)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        max_grade = None
+    return Assignment(
+        id=int(item.get("id", 0)),
+        course_id=course_id,
+        name=str(item.get("name", "")),
+        due_date=timestamp(item.get("duedate")),
+        cutoff_date=timestamp(item.get("cutoffdate")),
+        max_grade=max_grade,
+    )
+
+
+def _items(data: object) -> list[Mapping[str, Any]]:
+    if not isinstance(data, list):
+        return []
+    return [item for item in data if isinstance(item, Mapping)]
