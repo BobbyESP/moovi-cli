@@ -8,7 +8,7 @@ Todas las recetas usan la CLI `moovi` en modo de solo lectura.
 moovi whoami --json
 ```
 
-Si falla con código 2, revisa `.env`; no pidas la contraseña al usuario.
+Si falla con código 2, pide al usuario que ejecute `moovi login` en su terminal. No pidas la contraseña por chat.
 
 ## Buscar el ID de un curso
 

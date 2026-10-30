@@ -65,7 +65,7 @@ Ejemplo con `moovi courses --json`:
 1. `cli/main.py` construye el parser y carga `Settings` con `load_settings()`.
 2. `cli/context.py` instancia `MoodleRestClient`, `FileTokenStore` y `MoodleSession`; es el único punto de composición.
 3. `CatalogService.list_courses()` pide la sesión.
-4. `MoodleSession` resuelve el token: `MOOVI_TOKEN` → caché → login.
+4. `MoodleSession` resuelve el token: `MOOVI_TOKEN` → caché (con su usuario) → login con credenciales del entorno.
 5. Si Moodle responde `invalidtoken`, la sesión hace **un** login nuevo y reintenta.
 6. `MoodleRestClient` llama a `core_enrol_get_users_courses`, mapea el JSON a `Course` y devuelve el resultado.
 7. `cli/commands/courses.py` limita la lista y llama al `Formatter` elegido, que emite tabla, JSON o CSV.
@@ -98,9 +98,10 @@ class MoodleGateway(Protocol):
     def assignments(self, token: Token, course_ids: Sequence[int]) -> list[Assignment]: ...
 
 class TokenStore(Protocol):
-    def load(self, site: str, username: str) -> Token | None: ...
+    def load(self, site: str, username: str | None = None) -> Token | None: ...
+    def load_username(self, site: str) -> str | None: ...
     def save(self, site: str, username: str, token: Token) -> None: ...
-    def clear(self, site: str, username: str) -> None: ...
+    def clear(self, site: str, username: str | None = None) -> None: ...
 ```
 
 - `MoodleRestClient` implementa `MoodleGateway`.
@@ -124,11 +125,13 @@ Moodle devuelve **HTTP 200** en sus errores; el discriminante es `errorcode` (o 
 ## Ciclo de vida del token
 
 1. `MOOVI_TOKEN` (entorno o `.env`) tiene prioridad.
-2. Si no hay token explícito, se lee `~/.cache/moovi/token.json` (o `$XDG_CACHE_HOME/moovi/token.json`).
-3. Si no hay token y sí contraseña, se llama a `POST /login/token.php` con `service=moodle_mobile_app`.
-4. El token se guarda en el fichero con permisos `0600`; la contraseña nunca se persiste.
-5. Ante `invalidtoken`, `MoodleSession` hace un único login nuevo y reintenta la operación.
-6. Si no hay contraseña para renovar, se propaga `ConfigError` con instrucciones.
+2. Si no hay token explícito, se lee `~/.cache/moovi/token.json` (o `$XDG_CACHE_HOME/moovi/token.json`). Si no hay `MOOVI_USER`, se adopta el usuario guardado junto al token.
+3. Si no hay token y hay usuario/contraseña en el entorno, se llama a `POST /login/token.php` con `service=moodle_mobile_app`.
+4. `moovi login` permite introducir usuario y contraseña por terminal. La contraseña se lee con `getpass` y no se persiste; solo se guarda el token.
+5. `moovi login --no-input` usa `MOOVI_USER`/`MOOVI_PASSWORD` del entorno para scripts y CI.
+6. El token se guarda en el fichero con permisos `0600`.
+7. Ante `invalidtoken`, `MoodleSession` hace un único login nuevo y reintenta la operación si hay credenciales.
+8. Si no hay credenciales para renovar, se propaga `ConfigError` indicando que se ejecute `moovi login`.
 
 ## Modo de solo lectura
 

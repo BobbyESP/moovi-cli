@@ -12,8 +12,9 @@ CLI de solo lectura sobre la API oficial de Moovi. No usa scraping y no modifica
 - La CLI `moovi` debe estar disponible en el entorno conda `moovi`.
 - Si cada comando se ejecuta en una shell nueva, no uses `conda activate`: usa
   `conda run -n moovi --no-capture-output moovi ...`.
-- Debe existir un `.env` en la raíz del repositorio con `MOOVI_USER` y `MOOVI_PASSWORD` (o `MOOVI_TOKEN`). Ejecuta desde esa raíz o exporta las variables `MOOVI_*`.
-- **Nunca imprimas el contenido de `.env` ni el token.** No los pidas por chat.
+- Debe haber un token válido en `~/.cache/moovi/token.json` (se crea con `moovi login`) o `MOOVI_TOKEN` en el entorno. `.env` solo necesita `MOOVI_URL` y, opcionalmente, `MOOVI_USER`.
+- Ejecuta desde la raíz del repositorio para que se lea `.env`, o exporta las variables `MOOVI_*`.
+- **Nunca pidas la contraseña por chat ni imprimas `.env` o el token.** Si no hay sesión, pide al usuario que ejecute `moovi login` en su terminal. No uses `--no-input` salvo que las credenciales ya estén en el entorno.
 
 ## Flujo
 
@@ -22,6 +23,8 @@ CLI de solo lectura sobre la API oficial de Moovi. No usa scraping y no modifica
    ```bash
    moovi whoami --json
    ```
+
+   Si falla con “No hay sesión válida”, pide al usuario que ejecute `moovi login` en su terminal. No le pidas la contraseña.
 
 2. Localiza el curso por su shortname o nombre:
 

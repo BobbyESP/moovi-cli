@@ -45,6 +45,17 @@ def test_load_rejects_other_site_or_user(tmp_path: Path) -> None:
     assert store.load(SITE, "otra") is None
 
 
+def test_load_without_username_and_load_username(tmp_path: Path) -> None:
+    store = FileTokenStore(tmp_path / "token.json")
+    store.save(SITE, USER, Token("abc123"))
+
+    loaded = store.load(SITE)
+    assert loaded is not None
+    assert loaded.value == "abc123"
+    assert store.load_username(SITE) == USER
+    assert store.load_username("https://otro.example") is None
+
+
 def test_corrupt_cache_is_ignored(tmp_path: Path) -> None:
     path = tmp_path / "token.json"
     path.write_text("no es json", encoding="utf-8")

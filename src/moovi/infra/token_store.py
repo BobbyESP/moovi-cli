@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+from typing import Any
 
 from moovi.domain.values import Token
 
@@ -13,19 +14,25 @@ class FileTokenStore:
     def __init__(self, path: Path) -> None:
         self._path = Path(path)
 
-    def load(self, site: str, username: str) -> Token | None:
-        try:
-            data = json.loads(self._path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
+    def load(self, site: str, username: str | None = None) -> Token | None:
+        data = self._read()
+        if data is None or data.get("site") != site:
             return None
-        if not isinstance(data, dict):
-            return None
-        if data.get("site") != site or data.get("username") != username:
+        if username is not None and data.get("username") != username:
             return None
         token = data.get("token")
         if not isinstance(token, str) or not token:
             return None
         return Token(token)
+
+    def load_username(self, site: str) -> str | None:
+        data = self._read()
+        if data is None or data.get("site") != site:
+            return None
+        username = data.get("username")
+        if not isinstance(username, str) or not username:
+            return None
+        return username
 
     def save(self, site: str, username: str, token: Token) -> None:
         parent = self._path.parent
@@ -57,10 +64,22 @@ class FileTokenStore:
                     pass
         os.chmod(self._path, 0o600)
 
-    def clear(self, site: str, username: str) -> None:
-        if self.load(site, username) is None:
+    def clear(self, site: str, username: str | None = None) -> None:
+        data = self._read()
+        if data is None or data.get("site") != site:
+            return
+        if username is not None and data.get("username") != username:
             return
         try:
             self._path.unlink()
         except OSError:
             pass
+
+    def _read(self) -> dict[str, Any] | None:
+        try:
+            data = json.loads(self._path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return None
+        if not isinstance(data, dict):
+            return None
+        return data

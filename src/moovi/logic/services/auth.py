@@ -17,3 +17,9 @@ class AuthService:
 
     def whoami(self) -> SiteInfo:
         return self._session.site_info()
+
+    def login_interactive(self, username: str, password: str) -> SiteInfo:
+        return self._session.login_with(username, password)
+
+    def suggested_username(self) -> str | None:
+        return self._session.username

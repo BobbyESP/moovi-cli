@@ -55,27 +55,44 @@ class FakeGateway:
 
 
 class FakeStore:
-    def __init__(self, token: Token | None = None) -> None:
+    def __init__(
+        self, token: Token | None = None, username: str = "profesor"
+    ) -> None:
         self.token = token
+        self.username = username
         self.saved: list[Token] = []
 
-    def load(self, site: str, username: str) -> Token | None:
+    def load(self, site: str, username: str | None = None) -> Token | None:
+        if self.token is None:
+            return None
+        if username is not None and username != self.username:
+            return None
         return self.token
+
+    def load_username(self, site: str) -> str | None:
+        return self.username if self.token is not None else None
 
     def save(self, site: str, username: str, token: Token) -> None:
         self.token = token
+        self.username = username
         self.saved.append(token)
 
-    def clear(self, site: str, username: str) -> None:
+    def clear(self, site: str, username: str | None = None) -> None:
         self.token = None
 
 
-def build(gateway, store, password="secreto", explicit_token=None):
+def build(
+    gateway,
+    store,
+    password="secreto",
+    explicit_token=None,
+    username: str | None = "profesor",
+):
     return MoodleSession(
         gateway,
         store,
         site="https://moovi.uvigo.gal",
-        username="profesor",
+        username=username,
         password=password,
         explicit_token=explicit_token,
     )
@@ -103,12 +120,49 @@ def test_logs_in_and_saves_token_when_cache_is_empty() -> None:
     assert gateway.calls == [("site_info", "fresh-token")]
 
 
-def test_requires_password_when_there_is_no_token() -> None:
+def test_requires_login_when_there_is_no_token() -> None:
     gateway = FakeGateway()
     store = FakeStore()
 
-    with pytest.raises(ConfigError, match="MOOVI_PASSWORD"):
+    with pytest.raises(ConfigError, match="moovi login"):
         build(gateway, store, password=None).site_info()
+
+
+def test_loads_cached_token_without_configured_username() -> None:
+    gateway = FakeGateway()
+    store = FakeStore(Token("cached-token"), username="profesor")
+
+    session = build(gateway, store, password=None, username=None)
+    info = session.site_info()
+
+    assert info == SITE
+    assert session.username == "profesor"
+    assert gateway.login_calls == 0
+    assert gateway.calls == [("site_info", "cached-token")]
+
+
+def test_login_with_saves_token_and_username() -> None:
+    gateway = FakeGateway()
+    store = FakeStore()
+
+    session = build(gateway, store, password=None, username=None)
+    info = session.login_with("profesor", "secreto")
+
+    assert info == SITE
+    assert session.username == "profesor"
+    assert gateway.login_calls == 1
+    assert store.username == "profesor"
+    assert store.token is not None and store.token.value == "fresh-token"
+    assert gateway.calls == [("site_info", "fresh-token")]
+
+
+def test_suggested_username_comes_from_cache() -> None:
+    gateway = FakeGateway()
+    store = FakeStore(Token("cached-token"), username="profesor")
+
+    session = build(gateway, store, password=None, username=None)
+
+    assert session.username == "profesor"
 
 
 def test_relogins_once_when_token_is_invalid() -> None:

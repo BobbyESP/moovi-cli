@@ -40,19 +40,24 @@ conda run -n moovi --no-capture-output moovi --version
 
 ## Configuración
 
-Copia el fichero de ejemplo y rellena tus datos:
+Copia el fichero de ejemplo:
 
 ```bash
 cp .env.example .env
 ```
 
+La forma recomendada es dejar solo la URL y, opcionalmente, el usuario. **No hace falta guardar la contraseña**: `moovi login` la pide por terminal y guarda únicamente el token.
+
 ```dotenv
 MOOVI_URL=https://moovi.uvigo.gal
-MOOVI_USER=tu_usuario
-MOOVI_PASSWORD=tu_contrasena
+# MOOVI_USER=tu_usuario
 ```
 
-`.env` está en `.gitignore`: no se sube al repositorio. La contraseña nunca se pasa por argumentos de línea de comandos ni se guarda en la caché del token.
+- Si defines `MOOVI_USER`, se usa como valor por defecto al preguntar.
+- Si no lo defines, la CLI recuerda el usuario guardado con el token.
+- `MOOVI_PASSWORD` solo es necesaria para `moovi login --no-input` en scripts o CI. No la guardes si vas a usar el login interactivo.
+
+`.env` está en `.gitignore`: no se sube al repositorio. La contraseña nunca se pasa por argumentos de línea de comandos ni se guarda en disco.
 
 `moovi` lee `.env` del directorio desde el que se ejecuta. Ejecútalo desde la raíz del repositorio o exporta las variables `MOOVI_*` en el entorno.
 
@@ -93,10 +98,15 @@ moovi courses --format raw | grep -i "matemáticas"
 
 Autentica contra Moovi, valida el token y lo guarda en `~/.cache/moovi/token.json` con permisos `0600`.
 
+Si no hay una sesión válida, pide usuario y contraseña por terminal. La contraseña se introduce sin eco y no se guarda.
+
 ```bash
-moovi login
-moovi login --force   # ignora el token guardado
+moovi login             # interactivo si no hay token válido
+moovi login --force     # vuelve a pedir credenciales
+moovi login --no-input  # usa MOOVI_USER/MOOVI_PASSWORD del entorno (scripts/CI)
 ```
+
+Si ya hay un token válido, `moovi login` no pregunta nada. Usa `--force` para cambiar de cuenta o renovar la sesión.
 
 ### `moovi whoami`
 
@@ -281,7 +291,15 @@ Si sigue fallando, entra en el entorno y ejecuta `pip install -e .`.
 
 **`Credenciales incorrectas`**
 
-Revisa `MOOVI_USER` y `MOOVI_PASSWORD`. Si tu cuenta solo usa SSO, configura `MOOVI_TOKEN` como se explica arriba.
+Revisa el usuario y la contraseña que introduces en `moovi login`. Si tu cuenta solo usa SSO, configura `MOOVI_TOKEN` como se explica arriba.
+
+**`No hay sesión válida. Ejecuta moovi login`**
+
+No hay token cacheado y la CLI no tiene credenciales para renovarlo:
+
+```bash
+moovi login
+```
 
 **`El token de Moovi no es válido o ha caducado`**
 
@@ -304,6 +322,8 @@ Moovi no responde o está en mantenimiento. La CLI reintenta una vez los errores
 ## Seguridad y datos personales
 
 - El token se guarda en `~/.cache/moovi/token.json` con permisos `0600`; la contraseña no se guarda.
+- `moovi login` pide la contraseña por terminal con `getpass`, sin eco y sin dejarla en el historial.
+- Un agente no debe pedirte la contraseña por chat: si no hay sesión, debe indicarte que ejecutes `moovi login`.
 - El cliente limita las funciones a una lista de solo lectura.
 - `students` oculta los correos salvo que uses `--emails`.
 - Los datos de alumnado que consultes pueden acabar en el contexto de un agente o en los registros de tu terminal. Pide solo lo necesario y no vuelques listados completos sin motivo.

@@ -18,7 +18,7 @@ _LOOPBACK_HOSTS = frozenset({"localhost", "127.0.0.1", "::1"})
 @dataclass(frozen=True, slots=True)
 class Settings:
     site: str
-    username: str
+    username: str | None
     password: str | None
     token: Token | None
     cache_path: Path
@@ -35,11 +35,7 @@ def load_settings(
     values.update(dict(environ if environ is not None else os.environ))
 
     site = _validate_site(values.get("MOOVI_URL", DEFAULT_SITE).strip())
-    username = values.get("MOOVI_USER", "").strip()
-    if not username:
-        raise ConfigError(
-            "Falta MOOVI_USER. Copia .env.example a .env y rellena tus datos."
-        )
+    username = values.get("MOOVI_USER", "").strip() or None
 
     password = values.get("MOOVI_PASSWORD") or None
     raw_token = values.get("MOOVI_TOKEN") or None

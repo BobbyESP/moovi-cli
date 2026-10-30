@@ -30,7 +30,7 @@ class MoodleSession:
         store: TokenStore,
         *,
         site: str,
-        username: str,
+        username: str | None,
         password: str | None = None,
         explicit_token: Token | None = None,
     ) -> None:
@@ -43,6 +43,12 @@ class MoodleSession:
         self._token = explicit_token
         self._site_info: SiteInfo | None = None
 
+    @property
+    def username(self) -> str | None:
+        if self._username is not None:
+            return self._username
+        return self._store.load_username(self._site)
+
     def relogin(self) -> None:
         """Fuerza un login nuevo e invalida la información del sitio cacheada."""
         self._site_info = None
@@ -51,11 +57,20 @@ class MoodleSession:
             return
         self._token = self._login()
 
+    def login_with(self, username: str, password: str) -> SiteInfo:
+        """Autentica con credenciales explícitas y guarda el token."""
+        token = self._gateway.login(username, password)
+        self._store.save(self._site, username, token)
+        self._username = username
+        self._token = token
+        self._password = password
+        self._site_info = None
+        return self.site_info()
+
     def _login(self) -> Token:
-        if not self._password:
+        if not self._username or not self._password:
             raise ConfigError(
-                "No hay contraseña de Moovi disponible. Define MOOVI_PASSWORD en "
-                ".env o proporciona MOOVI_TOKEN."
+                "No hay sesión válida. Ejecuta `moovi login` para autenticarte."
             )
         token = self._gateway.login(self._username, self._password)
         self._store.save(self._site, self._username, token)
@@ -66,6 +81,8 @@ class MoodleSession:
             return self._token
         stored = self._store.load(self._site, self._username)
         if stored is not None:
+            if self._username is None:
+                self._username = self._store.load_username(self._site)
             self._token = stored
             return stored
         self._token = self._login()

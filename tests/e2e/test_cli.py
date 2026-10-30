@@ -288,10 +288,61 @@ def test_login_without_force_reuses_token(run_cli, credentials, fake_moodle) -> 
     assert fake_moodle.count("/login/token.php") == 1
 
 
-def test_login_force_reauthenticates(run_cli, credentials, fake_moodle) -> None:
+def test_login_force_reauthenticates_with_no_input(
+    run_cli, credentials, fake_moodle
+) -> None:
     assert run_cli("login", extra_env=credentials).returncode == 0
 
-    result = run_cli("login", "--force", extra_env=credentials)
+    result = run_cli("login", "--force", "--no-input", extra_env=credentials)
 
     assert result.returncode == 0, result.stderr
     assert fake_moodle.count("/login/token.php") == 2
+
+
+def test_login_no_input_requires_credentials(run_cli, credentials) -> None:
+    result = run_cli(
+        "login", "--no-input", extra_env={"MOOVI_URL": credentials["MOOVI_URL"]}
+    )
+
+    assert result.returncode == 2
+    assert "credenciales" in result.stderr.lower()
+
+
+def test_commands_work_with_only_the_cached_token(
+    run_cli, credentials, fake_moodle
+) -> None:
+    assert run_cli("login", extra_env=credentials).returncode == 0
+
+    result = run_cli(
+        "courses", "--json", extra_env={"MOOVI_URL": fake_moodle.url}
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert json.loads(result.stdout)[0]["short_name"] == "M1"
+
+
+def test_login_with_valid_token_does_not_prompt_without_tty(
+    run_cli, credentials, fake_moodle
+) -> None:
+    assert run_cli("login", extra_env=credentials).returncode == 0
+
+    result = run_cli("login", extra_env={"MOOVI_URL": fake_moodle.url})
+
+    assert result.returncode == 0, result.stderr
+    assert "terminal" not in result.stderr.lower()
+
+
+def test_command_without_session_tells_to_login(run_cli, fake_moodle) -> None:
+    result = run_cli("courses", extra_env={"MOOVI_URL": fake_moodle.url})
+
+    assert result.returncode == 2
+    assert "moovi login" in result.stderr
+
+
+def test_login_force_without_tty_fails_cleanly(run_cli, fake_moodle) -> None:
+    result = run_cli(
+        "login", "--force", extra_env={"MOOVI_URL": fake_moodle.url}
+    )
+
+    assert result.returncode == 2
+    assert "terminal" in result.stderr.lower()
