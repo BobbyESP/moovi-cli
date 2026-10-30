@@ -43,6 +43,7 @@ class JsonFormatter:
                     "first_name": participant.first_name,
                     "last_name": participant.last_name,
                     "full_name": participant.full_name,
+                    "groups": participant.groups,
                     "roles": participant.roles,
                     "last_access": participant.last_access,
                     "email": participant.email,

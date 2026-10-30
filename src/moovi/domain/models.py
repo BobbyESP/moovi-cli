@@ -50,10 +50,17 @@ class Role:
 
 
 @dataclass(frozen=True, slots=True)
+class Group:
+    id: int
+    name: str
+
+
+@dataclass(frozen=True, slots=True)
 class Participant:
     id: int
     first_name: str
     last_name: str
+    groups: tuple[Group, ...] = ()
     roles: tuple[Role, ...] = ()
     last_access: datetime | None = None
     email: str | None = None

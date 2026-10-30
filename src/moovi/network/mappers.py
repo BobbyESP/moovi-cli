@@ -9,6 +9,7 @@ from typing import Any
 from moovi.domain.models import (
     Assignment,
     Course,
+    Group,
     Module,
     Participant,
     Role,
@@ -99,6 +100,11 @@ def _map_participant(item: Mapping[str, Any]) -> Participant:
         for role in item.get("roles") or ()
         if isinstance(role, Mapping)
     )
+    groups = tuple(
+        _map_group(group)
+        for group in item.get("groups") or ()
+        if isinstance(group, Mapping)
+    )
     first_name = str(item.get("firstname") or "").strip()
     last_name = str(item.get("lastname") or "").strip()
     if not first_name and not last_name:
@@ -108,9 +114,21 @@ def _map_participant(item: Mapping[str, Any]) -> Participant:
         id=int(item.get("id", 0)),
         first_name=first_name,
         last_name=last_name,
+        groups=groups,
         roles=roles,
         last_access=timestamp(item.get("lastcourseaccess")),
         email=str(email) if email else None,
+    )
+
+
+def _map_group(item: Mapping[str, Any]) -> Group:
+    try:
+        group_id = int(item.get("id", 0) or 0)
+    except (TypeError, ValueError):
+        group_id = 0
+    return Group(
+        id=group_id,
+        name=str(item.get("name") or "").strip(),
     )
 
 

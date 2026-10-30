@@ -108,7 +108,24 @@ def test_students_hide_email_by_default(run_cli, credentials) -> None:
     )
     assert ana["full_name"] == "Ana Alumna"
     assert ana["email"] is None
+    assert ana["groups"] == [
+        {"id": 146, "name": "PROII_1 (Laboratorio)"},
+        {"id": 147, "name": "MODALIDAD_GLOBAL"},
+    ]
     assert ana["roles"] == [{"id": 5, "short_name": "student", "name": ""}]
+
+
+def test_students_without_groups_return_empty_list(run_cli, credentials) -> None:
+    assert run_cli("login", extra_env=credentials).returncode == 0
+
+    result = run_cli("students", "101", "--json", extra_env=credentials)
+
+    assert result.returncode == 0, result.stderr
+    participants = json.loads(result.stdout)
+    sin_grupo = next(
+        item for item in participants if item["full_name"] == "Sin Grupo"
+    )
+    assert sin_grupo["groups"] == []
 
 
 def test_students_can_include_email(run_cli, credentials) -> None:
@@ -136,6 +153,8 @@ def test_students_table_shows_role_labels(run_cli, credentials) -> None:
     assert result.returncode == 0, result.stderr
     assert "NOMBRE" in result.stdout
     assert "APELLIDOS" in result.stdout
+    assert "GRUPOS" in result.stdout
+    assert "PROII_1 (Laboratorio); MODALIDAD_GLOBAL" in result.stdout
     assert "Alumno/a" in result.stdout
     assert "Profesor/a" in result.stdout
 
@@ -196,13 +215,15 @@ def test_students_raw_csv(run_cli, credentials) -> None:
         "id",
         "first_name",
         "last_name",
+        "groups",
         "roles",
         "last_access",
         "email",
     ]
     ana = next(row for row in rows if row[1] == "Ana" and row[2] == "Alumna")
-    assert ana[3] == "student"
-    assert ana[5] == ""
+    assert ana[3] == "PROII_1 (Laboratorio);MODALIDAD_GLOBAL"
+    assert ana[4] == "student"
+    assert ana[6] == ""
 
 
 def test_contents_raw_csv(run_cli, credentials) -> None:

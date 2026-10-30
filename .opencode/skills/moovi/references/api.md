@@ -20,6 +20,7 @@ Moovi es Moodle 4.5 y expone los servicios web oficiales. No se usa scraping.
 - Las fechas son timestamps Unix en segundos; `0` significa “sin fecha”.
 - Algunos campos (`summary`) contienen HTML.
 - En `roles`, el campo `name` puede venir vacío; usa `shortname` como identificador fiable.
+- `core_enrol_get_enrolled_users` incluye `groups` con los grupos del curso creados por el profesorado; una persona puede estar en varios.
 
 ## Funciones usadas
 

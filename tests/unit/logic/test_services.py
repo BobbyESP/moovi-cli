@@ -40,9 +40,8 @@ class FakeSession:
                 7,
                 "Ana",
                 "Alumna",
-                (Role(5, "student", ""),),
-                None,
-                "ana@uvigo.gal",
+                roles=(Role(5, "student", ""),),
+                email="ana@uvigo.gal",
             )
         ]
 

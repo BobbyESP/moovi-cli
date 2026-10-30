@@ -68,6 +68,10 @@ PARTICIPANTS: list[dict[str, Any]] = [
         "firstname": "Ana",
         "lastname": "Alumna",
         "fullname": "Ana Alumna",
+        "groups": [
+            {"id": 146, "name": "PROII_1 (Laboratorio)"},
+            {"id": 147, "name": "MODALIDAD_GLOBAL"},
+        ],
         "roles": [
             {"roleid": 5, "name": "", "shortname": "student", "sortorder": 0}
         ],
@@ -79,6 +83,7 @@ PARTICIPANTS: list[dict[str, Any]] = [
         "firstname": "Profesor",
         "lastname": "Uno",
         "fullname": "Profesor Uno",
+        "groups": [{"id": 150, "name": "PROII_A (Teoría)"}],
         "roles": [
             {
                 "roleid": 3,
@@ -89,6 +94,18 @@ PARTICIPANTS: list[dict[str, Any]] = [
         ],
         "lastcourseaccess": 1700000001,
         "email": "profesor@uvigo.gal",
+    },
+    {
+        "id": 9,
+        "firstname": "Sin",
+        "lastname": "Grupo",
+        "fullname": "Sin Grupo",
+        "groups": [],
+        "roles": [
+            {"roleid": 5, "name": "", "shortname": "student", "sortorder": 0}
+        ],
+        "lastcourseaccess": 0,
+        "email": "singrupo@uvigo.gal",
     },
 ]
 

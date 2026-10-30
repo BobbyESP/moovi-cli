@@ -7,6 +7,7 @@ from moovi.cli.formats.table import TableFormatter
 from moovi.domain.models import (
     Assignment,
     Course,
+    Group,
     Module,
     Participant,
     Role,
@@ -25,31 +26,54 @@ def render(method: str, *args, **kwargs) -> str:
     return output.getvalue()
 
 
-def test_role_labels() -> None:
+def test_role_labels_and_groups() -> None:
     text = render(
         "participants",
-        [Participant(7, "Ana", "Alumna", (STUDENT,))],
+        [
+            Participant(
+                7,
+                "Ana",
+                "Alumna",
+                groups=(
+                    Group(146, "PROII_1 (Laboratorio)"),
+                    Group(147, "MODALIDAD_GLOBAL"),
+                ),
+                roles=(STUDENT,),
+            )
+        ],
         include_email=False,
     )
 
     assert "Alumno/a" in text
     assert "NOMBRE" in text
     assert "APELLIDOS" in text
+    assert "GRUPOS" in text
     assert "Ana" in text
     assert "Alumna" in text
+    assert "PROII_1 (Laboratorio); MODALIDAD_GLOBAL" in text
 
     assert "Profesor/a" in render(
         "participants",
-        [Participant(8, "Docente", "Uno", (TEACHER,))],
+        [Participant(8, "Docente", "Uno", roles=(TEACHER,))],
         include_email=False,
     )
+
+
+def test_participants_without_groups_show_dash() -> None:
+    text = render(
+        "participants",
+        [Participant(8, "Sin", "Grupo", roles=(STUDENT,))],
+        include_email=False,
+    )
+
+    assert "—" in text
 
 
 def test_prefers_role_name() -> None:
     role = Role(10, "guestteacher", "Profesor Invitado")
     text = render(
         "participants",
-        [Participant(9, "Invitado", "Docente", (role,))],
+        [Participant(9, "Invitado", "Docente", roles=(role,))],
         include_email=False,
     )
     assert "Profesor Invitado" in text
@@ -57,7 +81,11 @@ def test_prefers_role_name() -> None:
 
 def test_participants_email_column_only_when_requested() -> None:
     participant = Participant(
-        7, "Ana", "Alumna", (STUDENT,), None, "ana@uvigo.gal"
+        7,
+        "Ana",
+        "Alumna",
+        roles=(STUDENT,),
+        email="ana@uvigo.gal",
     )
 
     without_email = render("participants", [participant], include_email=False)

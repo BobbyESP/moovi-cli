@@ -17,7 +17,7 @@ cli ──► logic ──► domain
 
 | Capa | Responsabilidad | Puede importar |
 |---|---|---|
-| `domain` | Modelos, value objects, errores e invariantes. Sin I/O. `Participant` guarda `first_name` y `last_name`; `full_name` es una propiedad derivada. | Solo stdlib. |
+| `domain` | Modelos, value objects, errores e invariantes. Sin I/O. `Participant` guarda `first_name`, `last_name` y `groups`; `full_name` es una propiedad derivada. | Solo stdlib. |
 | `logic` | Casos de uso, sesión autenticada y puertos. | `domain`, `logic`. |
 | `network` | Cliente REST de Moodle, mapeo de respuestas y errores. | `domain`, `logic`, stdlib. |
 | `infra` | Configuración (`.env`) y persistencia del token. | `domain`, `logic`, stdlib. |
@@ -82,7 +82,7 @@ El formato es una **estrategia de presentación**, no un puerto de la arquitectu
 - Los comandos reciben el formatter ya construido; no tienen ramas por formato.
 - Una futura GUI reutilizaría `logic` y tendría su propio renderizador, sin tocar estos formatters.
 
-`--json` es un alias de `--format json`. `--format raw` genera CSV con cabecera, fechas ISO-8601, booleanos `true`/`false` y roles separados por `;`.
+`--json` es un alias de `--format json`. `--format raw` genera CSV con cabecera, fechas ISO-8601, booleanos `true`/`false` y listas separadas por `;` (grupos y roles). En la columna `groups`, un `;` dentro de un nombre se sustituye por `#` para no romper el campo.
 
 No se añaden filtros de conveniencia (`--role`, `--search`, `--sort`): se resuelven con `grep`, `sort`, `cut`, `awk` o `jq` sobre `raw`/`json`.
 

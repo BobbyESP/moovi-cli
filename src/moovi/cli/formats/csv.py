@@ -16,6 +16,7 @@ from moovi.cli.formats.common import (
 from moovi.domain.models import (
     Assignment,
     Course,
+    Group,
     Participant,
     Section,
     SiteInfo,
@@ -113,12 +114,21 @@ class CsvFormatter:
     ) -> None:
         del include_email  # la columna existe siempre; queda vacía sin --emails
         self._write(
-            ["id", "first_name", "last_name", "roles", "last_access", "email"],
+            [
+                "id",
+                "first_name",
+                "last_name",
+                "groups",
+                "roles",
+                "last_access",
+                "email",
+            ],
             [
                 [
                     str(participant.id),
                     participant.first_name,
                     participant.last_name,
+                    _groups_cell(participant.groups),
                     ";".join(role_key(role) for role in participant.roles),
                     iso_datetime(participant.last_access),
                     participant.email or "",
@@ -155,3 +165,10 @@ class CsvFormatter:
     ) -> None:
         self._writer.writerow(headers)
         self._writer.writerows(rows)
+
+
+def _groups_cell(groups: Sequence[Group]) -> str:
+    # El ';' separa grupos; si aparece en un nombre, se sustituye por '#'.
+    return ";".join(
+        group.name.replace(";", "#") for group in groups if group.name
+    )

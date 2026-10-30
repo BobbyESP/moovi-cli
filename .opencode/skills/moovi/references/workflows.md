@@ -50,6 +50,16 @@ Con correos, solo si el usuario lo pide:
 moovi students 12345 --emails --json
 ```
 
+Cada persona incluye `groups` (grupos del curso creados por el profesorado) y `roles`.
+
+## Alumnado de un grupo
+
+```bash
+moovi students 12345 --format raw | grep ',PROII_1 (Laboratorio),'
+```
+
+En `--format raw`, los grupos van en la columna `groups` separados por `;`.
+
 ## Ver tareas y fechas de entrega
 
 ```bash

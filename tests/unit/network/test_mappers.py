@@ -91,6 +91,10 @@ def test_maps_participants_with_empty_role_name() -> None:
                 "firstname": "Ana",
                 "lastname": "Alumna",
                 "fullname": "Ana Alumna",
+                "groups": [
+                    {"id": 146, "name": "met_part"},
+                    {"id": 147, "name": "apr2_part"},
+                ],
                 "roles": [
                     {
                         "roleid": 5,
@@ -112,6 +116,10 @@ def test_maps_participants_with_empty_role_name() -> None:
     assert participant.first_name == "Ana"
     assert participant.last_name == "Alumna"
     assert participant.full_name == "Ana Alumna"
+    assert [(group.id, group.name) for group in participant.groups] == [
+        (146, "met_part"),
+        (147, "apr2_part"),
+    ]
     assert participant.last_access is not None
     assert participant.email == "ana@uvigo.gal"
 
@@ -150,6 +158,15 @@ def test_falls_back_to_fullname_when_parts_are_missing() -> None:
     assert participant.first_name == "Nombre Completo"
     assert participant.last_name == ""
     assert participant.full_name == "Nombre Completo"
+    assert participant.groups == ()
+
+
+def test_maps_participant_without_groups() -> None:
+    [participant] = map_participants(
+        [{"id": 9, "firstname": "Sin", "lastname": "Grupos"}]
+    )
+
+    assert participant.groups == ()
 
 
 def test_maps_assignments() -> None:

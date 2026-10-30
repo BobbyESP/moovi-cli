@@ -141,19 +141,22 @@ moovi students 12345 --json
 ```
 
 ```
-ID   NOMBRE    APELLIDOS    ROLES        ÚLTIMO ACCESO
----  --------  -----------  -----------  -------------------
-7    Ana       Alumna       Alumno/a     2023-11-14 22:13 UTC
-8    Profesor  Uno          Profesor/a   2023-11-14 22:13 UTC
+ID   NOMBRE    APELLIDOS    GRUPOS                                      ROLES        ÚLTIMO ACCESO
+---  --------  -----------  ------------------------------------------  -----------  -------------------
+7    Ana       Alumna       PROII_1 (Laboratorio); MODALIDAD_GLOBAL     Alumno/a     2023-11-14 22:13 UTC
+8    Profesor  Uno          PROII_A (Teoría)                            Profesor/a   2023-11-14 22:13 UTC
 ```
 
-En JSON, los nombres van separados y `full_name` se calcula a partir de ellos:
+Los grupos son los que el profesorado crea en *Participantes > Grupos*. Una persona puede estar en varios.
+
+En JSON, los nombres van separados, `full_name` se calcula y los grupos son una lista de objetos:
 
 ```json
 {
   "first_name": "Ana",
   "last_name": "Alumna",
   "full_name": "Ana Alumna",
+  "groups": [{"id": 146, "name": "PROII_1 (Laboratorio)"}],
   "roles": [{"id": 5, "short_name": "student", "name": ""}]
 }
 ```
@@ -201,6 +204,9 @@ moovi students 1686 --format raw | grep ',student'
 # Profesorado
 moovi students 1686 --format raw | grep -E ',(editingteacher|teacher)'
 
+# Alumnado de un grupo concreto
+moovi students 1686 --format raw | grep ',PROII_1 (Laboratorio),'
+
 # Alumnado ordenado por apellidos
 moovi students 1686 --format raw | tail -n +2 | sort -t, -k3
 
@@ -224,10 +230,12 @@ Columnas de `--format raw`:
 | `whoami` / `login` | `user_id, username, full_name, site_name, release, functions_count` |
 | `courses` | `id, short_name, full_name, visible, start_date` |
 | `contents` | `section_id, section_name, module_id, module_name, mod_name, visible, url` |
-| `students` | `id, first_name, last_name, roles, last_access, email` |
+| `students` | `id, first_name, last_name, groups, roles, last_access, email` |
 | `assignments` | `id, course_id, name, due_date, cutoff_date, max_grade` |
 
 En `contents`, se genera una fila por módulo. Las secciones sin módulos aparecen con los campos de módulo vacíos. En `students`, la columna `email` existe siempre y queda vacía salvo que uses `--emails`.
+
+La columna `groups` une los grupos con `;`. Si un nombre de grupo contuviera `;`, se sustituye por `#` para que no rompa el campo. Las comas, comillas y saltos de línea se entrecomillan según el estándar CSV.
 
 ## Códigos de salida
 

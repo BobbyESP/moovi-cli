@@ -8,6 +8,7 @@ from moovi.cli.formats.csv import CsvFormatter
 from moovi.domain.models import (
     Assignment,
     Course,
+    Group,
     Module,
     Participant,
     Role,
@@ -41,7 +42,7 @@ def test_courses_csv_quotes_commas_and_uses_iso_dates() -> None:
     ]
 
 
-def test_participants_csv_separates_names_and_joins_roles() -> None:
+def test_participants_csv_separates_names_and_joins_groups_and_roles() -> None:
     rows = render_csv(
         "participants",
         [
@@ -49,9 +50,12 @@ def test_participants_csv_separates_names_and_joins_roles() -> None:
                 7,
                 "Ana",
                 "Alumna, Jr.",
-                (Role(5, "student", ""), Role(3, "editingteacher", "")),
-                None,
-                None,
+                groups=(
+                    Group(146, "met_part"),
+                    Group(147, "Grupo;Raro"),
+                    Group(148, "Grupo, Coma"),
+                ),
+                roles=(Role(5, "student", ""), Role(3, "editingteacher", "")),
             )
         ],
         include_email=False,
@@ -61,11 +65,20 @@ def test_participants_csv_separates_names_and_joins_roles() -> None:
         "id",
         "first_name",
         "last_name",
+        "groups",
         "roles",
         "last_access",
         "email",
     ]
-    assert rows[1] == ["7", "Ana", "Alumna, Jr.", "student;editingteacher", "", ""]
+    assert rows[1] == [
+        "7",
+        "Ana",
+        "Alumna, Jr.",
+        "met_part;Grupo#Raro;Grupo, Coma",
+        "student;editingteacher",
+        "",
+        "",
+    ]
 
 
 def test_sections_csv_flattens_modules_and_keeps_empty_sections() -> None:

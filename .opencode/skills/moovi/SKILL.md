@@ -31,7 +31,7 @@ CLI de solo lectura sobre la API oficial de Moovi. No usa scraping y no modifica
 
    ```bash
    moovi contents <course_id> --json
-   moovi students <course_id> --json
+   moovi students <course_id> --json   # incluye groups y roles
    moovi assignments <course_id> --json
    ```
 
