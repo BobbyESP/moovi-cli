@@ -3,6 +3,8 @@
 ## Si solo usas la CLI
 
 - Lee `README.md` y carga el skill `moovi` antes de improvisar.
+- Comprueba que `moovi` está disponible. Si tu shell no conserva la activación, usa `conda run -n moovi --no-capture-output moovi ...`.
+- Ejecuta desde la raíz del repositorio para que se lea `.env`, o exporta las variables `MOOVI_*`.
 - No hagas scraping ni llames a la API a mano: usa `moovi` con `--json` o `--format raw`.
 - Si una tarea te costó más de lo razonable, no te quedes con el workaround:
   - si faltaba una receta o un ejemplo de uso, propón mejorar el skill;

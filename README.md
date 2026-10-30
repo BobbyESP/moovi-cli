@@ -19,11 +19,23 @@ conda activate moovi
 pip install -e .
 ```
 
+> **Entorno activo:** `moovi` solo está disponible dentro del entorno conda.
+> Si trabajas en una shell persistente, usa `conda activate moovi`.
+> Si cada comando se ejecuta en una shell nueva (agentes, scripts, CI), usa
+> `conda run -n moovi --no-capture-output moovi ...`.
+
 Comprueba que funciona:
 
 ```bash
+conda activate moovi
 moovi --version
 moovi --help
+```
+
+O sin activar el entorno:
+
+```bash
+conda run -n moovi --no-capture-output moovi --version
 ```
 
 ## Configuración
@@ -41,6 +53,8 @@ MOOVI_PASSWORD=tu_contrasena
 ```
 
 `.env` está en `.gitignore`: no se sube al repositorio. La contraseña nunca se pasa por argumentos de línea de comandos ni se guarda en la caché del token.
+
+`moovi` lee `.env` del directorio desde el que se ejecuta. Ejecútalo desde la raíz del repositorio o exporta las variables `MOOVI_*` en el entorno.
 
 También puedes definir esas variables en el entorno; tienen prioridad sobre `.env`.
 
@@ -62,6 +76,7 @@ Con `MOOVI_TOKEN` no hace falta `MOOVI_PASSWORD`.
 ## Uso rápido
 
 ```bash
+conda activate moovi   # o usa `conda run -n moovi --no-capture-output moovi ...`
 moovi login
 moovi courses
 moovi contents 12345
@@ -253,6 +268,16 @@ Con `--format json` (o `--json`), los errores se escriben en `stderr` como:
 ```
 
 ## Problemas frecuentes
+
+**`moovi: command not found`**
+
+El entorno no está activo. Usa `conda activate moovi` o, desde una shell nueva:
+
+```bash
+conda run -n moovi --no-capture-output moovi courses --json
+```
+
+Si sigue fallando, entra en el entorno y ejecuta `pip install -e .`.
 
 **`Credenciales incorrectas`**
 
