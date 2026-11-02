@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 
 from moovi.cli.formats.table import TableFormatter
 from moovi.domain.models import (
+    Announcement,
     Assignment,
     Course,
     Group,
@@ -135,6 +136,21 @@ def test_assignments_table() -> None:
     assert "Práctica 1" in text
     assert "2024-01-01 00:00 UTC" in text
     assert "100" in text
+
+
+def test_announcements_table() -> None:
+    date = datetime(2024, 1, 1, tzinfo=timezone.utc)
+    text = render(
+        "announcements",
+        [Announcement(9001, "Aviso importante", "Profesor Uno", date, 2)],
+    )
+
+    assert "FECHA" in text
+    assert "AUTOR" in text
+    assert "ASUNTO" in text
+    assert "Aviso importante" in text
+    assert "Profesor Uno" in text
+    assert "2024-01-01 00:00 UTC" in text
 
 
 def test_site_info() -> None:

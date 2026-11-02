@@ -8,7 +8,13 @@ import sys
 from collections.abc import Sequence
 
 from moovi import __version__
-from moovi.cli.commands import assignments, auth, courses, people
+from moovi.cli.commands import (
+    announcements,
+    assignments,
+    auth,
+    courses,
+    people,
+)
 from moovi.cli.context import build_services
 from moovi.cli.errors import print_error
 from moovi.cli.exit_codes import exit_code_for
@@ -62,6 +68,7 @@ def build_parser() -> argparse.ArgumentParser:
     courses.register(subparsers, common)
     people.register(subparsers, common)
     assignments.register(subparsers, common)
+    announcements.register(subparsers, common)
     return parser
 
 

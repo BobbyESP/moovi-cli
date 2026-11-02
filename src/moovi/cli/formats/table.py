@@ -14,6 +14,7 @@ from moovi.cli.formats.common import (
     strip_html,
 )
 from moovi.domain.models import (
+    Announcement,
     Assignment,
     Course,
     Participant,
@@ -109,6 +110,21 @@ class TableFormatter:
         ]
         self._table(
             ["ID", "NOMBRE", "ENTREGA", "CIERRE", "NOTA MÁX."], rows
+        )
+
+    def announcements(self, announcements: Sequence[Announcement]) -> None:
+        rows = [
+            [
+                str(announcement.id),
+                format_datetime(announcement.created),
+                announcement.author,
+                announcement.subject,
+                str(announcement.num_replies),
+            ]
+            for announcement in announcements
+        ]
+        self._table(
+            ["ID", "FECHA", "AUTOR", "ASUNTO", "RESPUESTAS"], rows
         )
 
     def _table(self, headers: Sequence[str], rows: Sequence[Sequence[str]]) -> None:

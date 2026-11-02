@@ -1,8 +1,10 @@
 from datetime import timezone
 
 from moovi.network.mappers import (
+    map_announcements,
     map_assignments,
     map_courses,
+    map_forums,
     map_participants,
     map_sections,
     map_site_info,
@@ -195,8 +197,62 @@ def test_maps_assignments() -> None:
     assert assignment.max_grade == 100.0
 
 
+def test_maps_forums() -> None:
+    forums = map_forums(
+        [
+            {
+                "id": "2217",
+                "course": "101",
+                "name": "Foro de novas",
+                "type": "news",
+                "forcesubscribe": 1,
+            },
+            {
+                "id": 2218,
+                "course": 101,
+                "name": "Foro xeral",
+                "type": "general",
+                "forcesubscribe": "0",
+            },
+        ]
+    )
+
+    assert forums[0].id == 2217
+    assert forums[0].course_id == 101
+    assert forums[0].force_subscribe is True
+    assert forums[1].force_subscribe is False
+
+
+def test_maps_announcements() -> None:
+    [announcement] = map_announcements(
+        {
+            "discussions": [
+                {
+                    "id": 9001,
+                    "name": "Aviso importante",
+                    "userfullname": "Profesor Uno",
+                    "created": 1704067200,
+                    "numreplies": 2,
+                    "pinned": True,
+                    "locked": False,
+                }
+            ]
+        }
+    )
+
+    assert announcement.id == 9001
+    assert announcement.subject == "Aviso importante"
+    assert announcement.author == "Profesor Uno"
+    assert announcement.created is not None
+    assert announcement.num_replies == 2
+    assert announcement.pinned is True
+    assert announcement.locked is False
+
+
 def test_mappers_tolerate_bad_shapes() -> None:
     assert map_courses(None) == []
     assert map_sections({}) == []
     assert map_participants("nope") == []
     assert map_assignments([]) == []
+    assert map_forums({}) == []
+    assert map_announcements([]) == []

@@ -263,6 +263,149 @@ def test_assignments_raw_csv(run_cli, credentials) -> None:
     assert rows[1][2] == "Práctica 1"
 
 
+def test_announcements_json(run_cli, credentials) -> None:
+    assert run_cli("login", extra_env=credentials).returncode == 0
+
+    result = run_cli("announcements", "101", "--json", extra_env=credentials)
+
+    assert result.returncode == 0, result.stderr
+    data = json.loads(result.stdout)
+    assert data[0]["subject"] == "Aviso importante"
+    assert data[0]["author"] == "Profesor Uno"
+
+
+def test_announcements_table(run_cli, credentials) -> None:
+    assert run_cli("login", extra_env=credentials).returncode == 0
+
+    result = run_cli("announcements", "101", extra_env=credentials)
+
+    assert result.returncode == 0, result.stderr
+    assert "ASUNTO" in result.stdout
+    assert "Aviso importante" in result.stdout
+    assert "Profesor Uno" in result.stdout
+
+
+def test_announcements_raw_csv(run_cli, credentials) -> None:
+    assert run_cli("login", extra_env=credentials).returncode == 0
+
+    result = run_cli(
+        "announcements", "101", "--format", "raw", extra_env=credentials
+    )
+
+    assert result.returncode == 0, result.stderr
+    rows = list(csv.reader(io.StringIO(result.stdout)))
+    assert rows[0] == [
+        "id",
+        "created",
+        "author",
+        "subject",
+        "num_replies",
+        "pinned",
+        "locked",
+    ]
+    assert rows[1][3] == "Aviso importante"
+
+
+def test_announcements_limit_is_sent_to_the_api(
+    run_cli, credentials, fake_moodle
+) -> None:
+    assert run_cli("login", extra_env=credentials).returncode == 0
+
+    result = run_cli(
+        "announcements", "101", "--limit", "1", "--json", extra_env=credentials
+    )
+
+    assert result.returncode == 0, result.stderr
+    requests = [
+        params
+        for _, params in fake_moodle.requests
+        if params.get("wsfunction") == "mod_forum_get_forum_discussions"
+    ]
+    assert requests[-1]["perpage"] == "1"
+
+
+def test_announcements_ambiguity_lists_candidates(
+    run_cli, credentials, fake_moodle
+) -> None:
+    fake_moodle.forums = [
+        {
+            "id": 2217,
+            "course": 101,
+            "name": "Foro de novas",
+            "type": "news",
+            "forcesubscribe": 1,
+        },
+        {
+            "id": 2219,
+            "course": 101,
+            "name": "Avisos",
+            "type": "news",
+            "forcesubscribe": 1,
+        },
+    ]
+
+    result = run_cli("announcements", "101", extra_env=credentials)
+
+    assert result.returncode == 2
+    assert "2217" in result.stderr
+    assert "2219" in result.stderr
+    assert "--forum-id" in result.stderr
+
+
+def test_announcements_forum_id_resolves_ambiguity(
+    run_cli, credentials, fake_moodle
+) -> None:
+    fake_moodle.forums = [
+        {
+            "id": 2217,
+            "course": 101,
+            "name": "Foro de novas",
+            "type": "news",
+            "forcesubscribe": 1,
+        },
+        {
+            "id": 2219,
+            "course": 101,
+            "name": "Avisos",
+            "type": "news",
+            "forcesubscribe": 1,
+        },
+    ]
+
+    result = run_cli(
+        "announcements",
+        "101",
+        "--forum-id",
+        "2219",
+        "--json",
+        extra_env=credentials,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert json.loads(result.stdout)[0]["subject"] == "Aviso importante"
+
+
+def test_announcements_without_news_forum_lists_available_forums(
+    run_cli, credentials, fake_moodle
+) -> None:
+    fake_moodle.forums = [
+        {
+            "id": 2218,
+            "course": 101,
+            "name": "Foro xeral",
+            "type": "general",
+            "forcesubscribe": 0,
+        }
+    ]
+
+    result = run_cli("announcements", "101", extra_env=credentials)
+
+    assert result.returncode == 2
+    assert "2218" in result.stderr
+    assert "Foro xeral" in result.stderr
+    assert "--forum-id" in result.stderr
+
+
 def test_format_json_is_an_alias(run_cli, credentials) -> None:
     assert run_cli("login", extra_env=credentials).returncode == 0
 

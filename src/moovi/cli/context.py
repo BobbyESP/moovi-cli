@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from moovi.infra.settings import Settings
 from moovi.infra.token_store import FileTokenStore
 from moovi.logic.services import (
+    AnnouncementService,
     AssignmentService,
     AuthService,
     CatalogService,
@@ -22,6 +23,7 @@ class Services:
     catalog: CatalogService
     people: PeopleService
     assignments: AssignmentService
+    announcements: AnnouncementService
 
 
 def build_services(settings: Settings) -> Services:
@@ -40,4 +42,5 @@ def build_services(settings: Settings) -> Services:
         catalog=CatalogService(session),
         people=PeopleService(session),
         assignments=AssignmentService(session),
+        announcements=AnnouncementService(session),
     )

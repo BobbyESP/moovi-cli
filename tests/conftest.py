@@ -126,6 +126,47 @@ ASSIGNMENTS: dict[str, Any] = {
     ]
 }
 
+FORUMS: list[dict[str, Any]] = [
+    {
+        "id": 2217,
+        "course": 101,
+        "name": "Foro de novas",
+        "type": "news",
+        "forcesubscribe": 1,
+    },
+    {
+        "id": 2218,
+        "course": 101,
+        "name": "Foro xeral",
+        "type": "general",
+        "forcesubscribe": 0,
+    },
+]
+
+ANNOUNCEMENTS: dict[str, Any] = {
+    "discussions": [
+        {
+            "id": 9001,
+            "name": "Aviso importante",
+            "userfullname": "Profesor Uno",
+            "created": 1704067200,
+            "numreplies": 0,
+            "pinned": False,
+            "locked": False,
+        },
+        {
+            "id": 9002,
+            "name": "Segundo aviso",
+            "userfullname": "Profesor Uno",
+            "created": 1704153600,
+            "numreplies": 2,
+            "pinned": True,
+            "locked": False,
+        },
+    ],
+    "warnings": [],
+}
+
 
 class FakeMoodle:
     def __init__(self) -> None:
@@ -135,6 +176,8 @@ class FakeMoodle:
         self.invalid_token_once = False
         self.forbidden: set[str] = set()
         self.server_errors: set[str] = set()
+        self.forums: list[dict[str, Any]] = list(FORUMS)
+        self.announcements: dict[str, Any] = ANNOUNCEMENTS
         self.requests: list[tuple[str, dict[str, str]]] = []
         self._server: ThreadingHTTPServer | None = None
         self._thread: threading.Thread | None = None
@@ -245,6 +288,8 @@ class FakeMoodle:
             "core_course_get_contents": CONTENTS,
             "core_enrol_get_enrolled_users": PARTICIPANTS,
             "mod_assign_get_assignments": ASSIGNMENTS,
+            "mod_forum_get_forums_by_courses": self.forums,
+            "mod_forum_get_forum_discussions": self.announcements,
         }
         if function not in responses:
             self._send(

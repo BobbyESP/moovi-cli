@@ -14,6 +14,7 @@ from moovi.cli.formats.common import (
     role_key,
 )
 from moovi.domain.models import (
+    Announcement,
     Assignment,
     Course,
     Group,
@@ -157,6 +158,31 @@ class CsvFormatter:
                     format_grade(assignment.max_grade, missing=""),
                 ]
                 for assignment in assignments
+            ],
+        )
+
+    def announcements(self, announcements: Sequence[Announcement]) -> None:
+        self._write(
+            [
+                "id",
+                "created",
+                "author",
+                "subject",
+                "num_replies",
+                "pinned",
+                "locked",
+            ],
+            [
+                [
+                    str(announcement.id),
+                    iso_datetime(announcement.created),
+                    announcement.author,
+                    announcement.subject,
+                    str(announcement.num_replies),
+                    format_bool(announcement.pinned),
+                    format_bool(announcement.locked),
+                ]
+                for announcement in announcements
             ],
         )
 

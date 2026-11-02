@@ -69,3 +69,25 @@ def test_nested_params_use_moodle_notation(fake_moodle) -> None:
     assert params["courseids[0]"] == "101"
     assert params["wsfunction"] == "mod_assign_get_assignments"
     assert params["moodlewsrestformat"] == "json"
+
+
+def test_course_forums(fake_moodle) -> None:
+    forums = client(fake_moodle).course_forums(Token("test-token"), 101)
+
+    assert forums[0].type == "news"
+    assert forums[0].force_subscribe is True
+    _, params = fake_moodle.requests[-1]
+    assert params["courseids[0]"] == "101"
+
+
+def test_forum_discussions(fake_moodle) -> None:
+    announcements = client(fake_moodle).forum_discussions(
+        Token("test-token"), 2217, 3
+    )
+
+    assert announcements[0].subject == "Aviso importante"
+    _, params = fake_moodle.requests[-1]
+    assert params["forumid"] == "2217"
+    assert params["sortorder"] == "-1"
+    assert params["page"] == "0"
+    assert params["perpage"] == "3"

@@ -20,8 +20,10 @@ from moovi.domain.errors import (
     ReadOnlyViolation,
 )
 from moovi.domain.models import (
+    Announcement,
     Assignment,
     Course,
+    Forum,
     Participant,
     Section,
     SiteInfo,
@@ -29,8 +31,10 @@ from moovi.domain.models import (
 from moovi.domain.values import Token
 from moovi.network.errors import raise_for_moodle_error
 from moovi.network.mappers import (
+    map_announcements,
     map_assignments,
     map_courses,
+    map_forums,
     map_participants,
     map_sections,
     map_site_info,
@@ -48,6 +52,8 @@ READ_ONLY_FUNCTIONS = frozenset(
         "core_course_get_contents",
         "core_enrol_get_enrolled_users",
         "mod_assign_get_assignments",
+        "mod_forum_get_forums_by_courses",
+        "mod_forum_get_forum_discussions",
     }
 )
 
@@ -160,6 +166,27 @@ class MoodleRestClient:
             token, "mod_assign_get_assignments", courseids=list(course_ids)
         )
         return map_assignments(data)
+
+    def course_forums(self, token: Token, course_id: int) -> list[Forum]:
+        data = self.call(
+            token,
+            "mod_forum_get_forums_by_courses",
+            courseids=[course_id],
+        )
+        return map_forums(data)
+
+    def forum_discussions(
+        self, token: Token, forum_id: int, limit: int
+    ) -> list[Announcement]:
+        data = self.call(
+            token,
+            "mod_forum_get_forum_discussions",
+            forumid=forum_id,
+            sortorder=-1,
+            page=0,
+            perpage=limit,
+        )
+        return map_announcements(data)
 
 
 def _as_mapping(data: object) -> Mapping[str, Any]:

@@ -2,7 +2,7 @@
 
 Herramienta de línea de comandos para consultar **Moovi**, la plataforma Moodle de la Universidade de Vigo, en **modo de solo lectura** y a través de su API oficial de servicios web.
 
-Permite listar tus cursos, ver el contenido de una asignatura, consultar el alumnado matriculado y revisar las tareas. No hace *scraping* y no modifica nada en Moovi.
+Permite listar tus cursos, ver el contenido de una asignatura, consultar el alumnado matriculado, revisar las tareas y leer el foro de noticias. No hace *scraping* y no modifica nada en Moovi.
 
 > Documentación técnica: [`docs/architecture.md`](docs/architecture.md).
 
@@ -87,6 +87,7 @@ moovi courses
 moovi contents 12345
 moovi students 12345
 moovi assignments 12345
+moovi announcements 12345
 
 # Para componer con herramientas Unix
 moovi courses --format raw | grep -i "matemáticas"
@@ -203,6 +204,37 @@ ID   NOMBRE       ENTREGA              CIERRE  NOTA MÁX.
 501  Práctica 1   2024-01-01 00:00 UTC  —       100
 ```
 
+## Manejo del foro de noticias de Moovi
+
+Moovi crea automáticamente en cada materia un foro de noticias al que se suscriben obligatoriamente todos los participantes. Se usa para enviar avisos al alumnado.
+
+`moovi announcements` localiza ese foro por su tipo (`news`), no por su nombre, porque el nombre cambia con el idioma o puede renombrarse. No es un gestor genérico de foros: está pensado para el foro de noticias de Moovi.
+
+```bash
+moovi announcements 12345
+moovi announcements 12345 --limit 20
+moovi announcements 12345 --json
+moovi announcements 12345 --format raw
+```
+
+Sin `--limit`, muestra los 10 anuncios más recientes. Si una materia no tiene foro de noticias, el comando lo indica y lista los foros disponibles para usar con `--forum-id`.
+
+```
+ID     FECHA                 AUTOR                 ASUNTO                                RESPUESTAS
+-----  --------------------  --------------------  ------------------------------------  ----------
+63251  2026-07-13 08:51 UTC  Daniel González Peña  PROII: Notas finales de la convocatoria  0
+```
+
+En Moovi el foro suele llamarse `Foro de novas` o `Foro de anuncios`, pero el nombre no es fiable. El identificador estable es `type = "news"` y, como refuerzo, `forcesubscribe = 1`.
+
+Si hay varios foros de noticias y no se puede elegir uno solo, el comando muestra los candidatos y pide elegir con `--forum-id`:
+
+```bash
+moovi announcements 12345 --forum-id 2217
+```
+
+También puedes usar `--forum-id` si la materia no tiene un foro `news` y quieres consultar otro foro concreto.
+
 ## Opciones comunes
 
 | Opción | Descripción |
@@ -257,6 +289,7 @@ Columnas de `--format raw`:
 | `contents` | `section_id, section_name, module_id, module_name, mod_name, visible, url` |
 | `students` | `id, first_name, last_name, groups, roles, last_access, email` |
 | `assignments` | `id, course_id, name, due_date, cutoff_date, max_grade` |
+| `announcements` | `id, created, author, subject, num_replies, pinned, locked` |
 
 En `contents`, se genera una fila por módulo. Las secciones sin módulos aparecen con los campos de módulo vacíos. En `students`, la columna `email` existe siempre y queda vacía salvo que uses `--emails`.
 

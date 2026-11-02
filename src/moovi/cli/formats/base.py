@@ -6,6 +6,7 @@ from collections.abc import Sequence
 from typing import Protocol
 
 from moovi.domain.models import (
+    Announcement,
     Assignment,
     Course,
     Participant,
@@ -29,3 +30,5 @@ class Formatter(Protocol):
     ) -> None: ...
 
     def assignments(self, assignments: Sequence[Assignment]) -> None: ...
+
+    def announcements(self, announcements: Sequence[Announcement]) -> None: ...

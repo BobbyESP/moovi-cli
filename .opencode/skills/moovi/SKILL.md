@@ -38,6 +38,7 @@ CLI de solo lectura sobre la API oficial de Moovi. No usa scraping y no modifica
    moovi contents <course_id> --json
    moovi students <course_id> --json   # incluye groups y roles
    moovi assignments <course_id> --json
+   moovi announcements <course_id> --json   # foro de noticias de Moovi
    ```
 
 4. Resume el resultado. No vuelques listados completos si basta con un resumen.
@@ -50,6 +51,7 @@ CLI de solo lectura sobre la API oficial de Moovi. No usa scraping y no modifica
 - No incluyas correos del alumnado salvo que el usuario lo pida: `students` los omite por defecto; `--emails` los añade.
 - No consultes datos personales que no necesites (GDPR).
 - No intentes escrituras: no existen comandos para ello.
+- `announcements` es específico del foro de noticias de Moovi. Si el comando pide `--forum-id`, usa el id de un candidato; no inventes ids.
 - Si un comando falla, mira el código de salida antes de reintentar:
   - `2`: configuración, credenciales o token.
   - `3`: red o API.

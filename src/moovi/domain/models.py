@@ -80,3 +80,23 @@ class Assignment:
     due_date: datetime | None = None
     cutoff_date: datetime | None = None
     max_grade: float | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class Forum:
+    id: int
+    course_id: int
+    name: str
+    type: str
+    force_subscribe: bool
+
+
+@dataclass(frozen=True, slots=True)
+class Announcement:
+    id: int
+    subject: str
+    author: str
+    created: datetime | None = None
+    num_replies: int = 0
+    pinned: bool = False
+    locked: bool = False

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from moovi.domain.errors import (
+    AmbiguousForumError,
     ApiError,
     AuthorizationError,
     ConfigError,
@@ -10,12 +11,22 @@ from moovi.domain.errors import (
     InvalidTokenError,
     MooviError,
     NetworkError,
+    NoAnnouncementsForumError,
     ReadOnlyViolation,
 )
 
 
 def exit_code_for(error: MooviError) -> int:
-    if isinstance(error, (ConfigError, InvalidCredentialsError, InvalidTokenError)):
+    if isinstance(
+        error,
+        (
+            ConfigError,
+            InvalidCredentialsError,
+            InvalidTokenError,
+            AmbiguousForumError,
+            NoAnnouncementsForumError,
+        ),
+    ):
         return 2
     if isinstance(error, (AuthorizationError, ReadOnlyViolation)):
         return 4

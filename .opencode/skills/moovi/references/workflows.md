@@ -52,6 +52,20 @@ moovi students 12345 --emails --json
 
 Cada persona incluye `groups` (grupos del curso creados por el profesorado) y `roles`.
 
+## Leer el foro de noticias de Moovi
+
+Moovi crea automáticamente un foro de noticias por materia. No lo busques por nombre: el comando lo localiza por tipo.
+
+```bash
+moovi announcements 12345 --json
+```
+
+Si hay varios foros de noticias, el comando muestra los ids y pide elegir:
+
+```bash
+moovi announcements 12345 --forum-id 2217 --json
+```
+
 ## Alumnado de un grupo
 
 ```bash

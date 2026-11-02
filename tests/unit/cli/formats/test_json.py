@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 
 from moovi.cli.formats.json import JsonFormatter
 from moovi.domain.models import (
+    Announcement,
     Course,
     Group,
     Participant,
@@ -51,6 +52,28 @@ def test_courses_serialize_dates_as_iso() -> None:
     )
 
     assert data[0]["start_date"] == "2024-01-01T00:00:00+00:00"
+
+
+def test_announcements_json() -> None:
+    data = render_json(
+        "announcements",
+        [
+            Announcement(
+                9001,
+                "Aviso",
+                "Profesor",
+                datetime(2024, 1, 1, tzinfo=timezone.utc),
+                1,
+                True,
+                False,
+            )
+        ],
+    )
+
+    assert data[0]["subject"] == "Aviso"
+    assert data[0]["author"] == "Profesor"
+    assert data[0]["created"] == "2024-01-01T00:00:00+00:00"
+    assert data[0]["pinned"] is True
 
 
 def test_sections_and_site_info() -> None:

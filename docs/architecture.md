@@ -30,13 +30,13 @@ La regla se comprueba automáticamente en `tests/unit/test_architecture.py`: si 
 ```
 src/moovi/
 ├── domain/
-│   ├── models.py      # SiteInfo, Course, Section, Module, Role, Participant, Assignment
+│   ├── models.py      # SiteInfo, Course, Section, Module, Role, Participant, Assignment, Forum, Announcement
 │   ├── values.py      # Token (repr redactado)
 │   └── errors.py      # errores de dominio
 ├── logic/
 │   ├── ports.py       # MoodleGateway, TokenStore (Protocol)
 │   ├── session.py     # MoodleSession: token, login y reintento
-│   └── services/      # AuthService, CatalogService, PeopleService, AssignmentService
+│   └── services/      # AuthService, CatalogService, PeopleService, AssignmentService, AnnouncementService
 ├── network/
 │   ├── rest.py        # MoodleRestClient(MoodleGateway)
 │   ├── params.py      # flatten a notación Moodle
@@ -96,6 +96,10 @@ class MoodleGateway(Protocol):
     def course_contents(self, token: Token, course_id: int) -> list[Section]: ...
     def enrolled_users(self, token: Token, course_id: int) -> list[Participant]: ...
     def assignments(self, token: Token, course_ids: Sequence[int]) -> list[Assignment]: ...
+    def course_forums(self, token: Token, course_id: int) -> list[Forum]: ...
+    def forum_discussions(
+        self, token: Token, forum_id: int, limit: int
+    ) -> list[Announcement]: ...
 
 class TokenStore(Protocol):
     def load(self, site: str, username: str | None = None) -> Token | None: ...
@@ -119,6 +123,8 @@ class TokenStore(Protocol):
 | `ReadOnlyViolation` | Función fuera de la allowlist. | 4 |
 | `NetworkError` | HTTP 5xx, DNS, timeout. | 3 |
 | `ApiError` | Cualquier otro `errorcode`. | 3 |
+| `NoAnnouncementsForumError` | La materia no tiene foro de noticias. | 2 |
+| `AmbiguousForumError` | Varios foros de noticias sin desempate. | 2 |
 
 Moodle devuelve **HTTP 200** en sus errores; el discriminante es `errorcode` (o `exception`). Esa traducción vive en `network/errors.py`.
 
@@ -132,6 +138,12 @@ Moodle devuelve **HTTP 200** en sus errores; el discriminante es `errorcode` (o 
 6. El token se guarda en el fichero con permisos `0600`.
 7. Ante `invalidtoken`, `MoodleSession` hace un único login nuevo y reintenta la operación si hay credenciales.
 8. Si no hay credenciales para renovar, se propaga `ConfigError` indicando que se ejecute `moovi login`.
+
+## Foro de noticias de Moovi
+
+`AnnouncementService` localiza el foro de noticias por `type == "news"`, nunca por el nombre. Si hay varios candidatos, prefiere el que tiene `forcesubscribe == 1`; si el empate persiste, pide `--forum-id`. Un id explícito también permite consultar otro foro del curso.
+
+La lectura usa `mod_forum_get_forums_by_courses` y `mod_forum_get_forum_discussions`, ambas en la allowlist de solo lectura. La publicación queda fuera de esta fase: sería `mod_forum_add_discussion` desde una superficie de escritura separada.
 
 ## Modo de solo lectura
 
@@ -151,7 +163,7 @@ Para añadir una función hay que hacerlo en tres sitios: la allowlist, el puert
 
 ## Tests
 
-- **Unitarios:** dominio, lógica con dobles, mapeo, parámetros, configuración, permisos del token y formatters con `StringIO`. Incluyen el test de arquitectura.
+- **Unitarios:** dominio, lógica con dobles, mapeo, parámetros, configuración, permisos del token, selección del foro de noticias y formatters con `StringIO`. Incluyen el test de arquitectura.
 - **Integración:** `MoodleRestClient` contra un `ThreadingHTTPServer` local que emula `login/token.php` y `rest/server.php`.
 - **E2E:** la CLI real en subprocess contra ese servidor falso, con `HOME` y `XDG_CACHE_HOME` temporales. Comprueban login, JSON, tablas, reintento de token, permisos, códigos de salida y que el token no se filtre.
 - **Live:** `pytest -m live` con `MOOVI_E2E=1` y un `.env` real; desactivados por defecto.

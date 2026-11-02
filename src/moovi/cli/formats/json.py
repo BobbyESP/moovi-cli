@@ -8,6 +8,7 @@ from typing import TextIO
 
 from moovi.cli.formats.common import write_json
 from moovi.domain.models import (
+    Announcement,
     Assignment,
     Course,
     Participant,
@@ -55,3 +56,6 @@ class JsonFormatter:
 
     def assignments(self, assignments: Sequence[Assignment]) -> None:
         write_json(list(assignments), self._stream)
+
+    def announcements(self, announcements: Sequence[Announcement]) -> None:
+        write_json(list(announcements), self._stream)

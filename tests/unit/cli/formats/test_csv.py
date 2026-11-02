@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 
 from moovi.cli.formats.csv import CsvFormatter
 from moovi.domain.models import (
+    Announcement,
     Assignment,
     Course,
     Group,
@@ -133,6 +134,42 @@ def test_assignments_csv() -> None:
         "2024-01-01T00:00:00+00:00",
         "",
         "100",
+    ]
+
+
+def test_announcements_csv() -> None:
+    rows = render_csv(
+        "announcements",
+        [
+            Announcement(
+                9001,
+                "Aviso, importante",
+                "Profesor Uno",
+                datetime(2024, 1, 1, tzinfo=timezone.utc),
+                2,
+                True,
+                False,
+            )
+        ],
+    )
+
+    assert rows[0] == [
+        "id",
+        "created",
+        "author",
+        "subject",
+        "num_replies",
+        "pinned",
+        "locked",
+    ]
+    assert rows[1] == [
+        "9001",
+        "2024-01-01T00:00:00+00:00",
+        "Profesor Uno",
+        "Aviso, importante",
+        "2",
+        "true",
+        "false",
     ]
 
 

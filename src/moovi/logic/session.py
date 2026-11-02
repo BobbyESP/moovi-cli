@@ -11,8 +11,10 @@ from typing import TypeVar
 
 from moovi.domain.errors import ConfigError, InvalidTokenError
 from moovi.domain.models import (
+    Announcement,
     Assignment,
     Course,
+    Forum,
     Participant,
     Section,
     SiteInfo,
@@ -120,4 +122,18 @@ class MoodleSession:
     def assignments(self, course_ids: Sequence[int]) -> list[Assignment]:
         return self._call(
             lambda token: self._gateway.assignments(token, course_ids)
+        )
+
+    def course_forums(self, course_id: int) -> list[Forum]:
+        return self._call(
+            lambda token: self._gateway.course_forums(token, course_id)
+        )
+
+    def forum_discussions(
+        self, forum_id: int, limit: int
+    ) -> list[Announcement]:
+        return self._call(
+            lambda token: self._gateway.forum_discussions(
+                token, forum_id, limit
+            )
         )

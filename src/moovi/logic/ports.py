@@ -6,8 +6,10 @@ from collections.abc import Sequence
 from typing import Protocol
 
 from moovi.domain.models import (
+    Announcement,
     Assignment,
     Course,
+    Forum,
     Participant,
     Section,
     SiteInfo,
@@ -31,6 +33,12 @@ class MoodleGateway(Protocol):
     def assignments(
         self, token: Token, course_ids: Sequence[int]
     ) -> list[Assignment]: ...
+
+    def course_forums(self, token: Token, course_id: int) -> list[Forum]: ...
+
+    def forum_discussions(
+        self, token: Token, forum_id: int, limit: int
+    ) -> list[Announcement]: ...
 
 
 class TokenStore(Protocol):

@@ -7,8 +7,10 @@ from datetime import datetime, timezone
 from typing import Any
 
 from moovi.domain.models import (
+    Announcement,
     Assignment,
     Course,
+    Forum,
     Group,
     Module,
     Participant,
@@ -173,6 +175,48 @@ def _map_assignment(item: Mapping[str, Any], course_id: int) -> Assignment:
         cutoff_date=timestamp(item.get("cutoffdate")),
         max_grade=max_grade,
     )
+
+
+def map_forums(data: object) -> list[Forum]:
+    return [_map_forum(item) for item in _items(data)]
+
+
+def _map_forum(item: Mapping[str, Any]) -> Forum:
+    return Forum(
+        id=int(item.get("id", 0)),
+        course_id=int(item.get("course", 0)),
+        name=str(item.get("name", "")),
+        type=str(item.get("type", "")),
+        force_subscribe=_as_bool(item.get("forcesubscribe")),
+    )
+
+
+def map_announcements(data: object) -> list[Announcement]:
+    if not isinstance(data, Mapping):
+        return []
+    return [
+        _map_announcement(item)
+        for item in data.get("discussions") or ()
+        if isinstance(item, Mapping)
+    ]
+
+
+def _map_announcement(item: Mapping[str, Any]) -> Announcement:
+    return Announcement(
+        id=int(item.get("id", 0)),
+        subject=str(item.get("name", "")),
+        author=str(item.get("userfullname", "")),
+        created=timestamp(item.get("created")),
+        num_replies=int(item.get("numreplies", 0) or 0),
+        pinned=_as_bool(item.get("pinned")),
+        locked=_as_bool(item.get("locked")),
+    )
+
+
+def _as_bool(value: object) -> bool:
+    if isinstance(value, str):
+        return value.strip().lower() not in {"", "0", "false", "no"}
+    return bool(value)
 
 
 def _items(data: object) -> list[Mapping[str, Any]]:
