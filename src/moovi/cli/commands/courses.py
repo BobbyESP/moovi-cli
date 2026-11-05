@@ -6,6 +6,7 @@ import argparse
 
 from moovi.cli.context import Services
 from moovi.cli.formats.base import Formatter
+from moovi.cli.tables import ContentsTable, CoursesTable
 
 
 def register(
@@ -32,14 +33,14 @@ def _courses(
     args: argparse.Namespace, services: Services, formatter: Formatter
 ) -> int:
     courses = _limit(services.catalog.list_courses(), args)
-    formatter.courses(courses)
+    formatter.render(CoursesTable(courses))
     return 0
 
 
 def _contents(
     args: argparse.Namespace, services: Services, formatter: Formatter
 ) -> int:
-    formatter.sections(services.catalog.get_contents(args.course_id))
+    formatter.render(ContentsTable(services.catalog.get_contents(args.course_id)))
     return 0
 
 

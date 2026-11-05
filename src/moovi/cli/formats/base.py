@@ -1,34 +1,11 @@
-"""Contrato de presentación: cada formato implementa estos métodos."""
+"""Contrato de los formatters de salida."""
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 from typing import Protocol
 
-from moovi.domain.models import (
-    Announcement,
-    Assignment,
-    Course,
-    Participant,
-    Section,
-    SiteInfo,
-)
+from moovi.cli.tables.base import Table
 
 
 class Formatter(Protocol):
-    def site_info(self, info: SiteInfo) -> None: ...
-
-    def courses(self, courses: Sequence[Course]) -> None: ...
-
-    def sections(self, sections: Sequence[Section]) -> None: ...
-
-    def participants(
-        self,
-        participants: Sequence[Participant],
-        *,
-        include_email: bool,
-    ) -> None: ...
-
-    def assignments(self, assignments: Sequence[Assignment]) -> None: ...
-
-    def announcements(self, announcements: Sequence[Announcement]) -> None: ...
+    def render(self, table: Table) -> None: ...

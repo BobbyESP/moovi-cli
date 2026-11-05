@@ -6,6 +6,7 @@ import argparse
 
 from moovi.cli.context import Services
 from moovi.cli.formats.base import Formatter
+from moovi.cli.tables import ParticipantsTable
 
 
 def register(
@@ -35,5 +36,7 @@ def _students(
     limit = getattr(args, "limit", None)
     if limit:
         participants = participants[:limit]
-    formatter.participants(participants, include_email=args.emails)
+    formatter.render(
+        ParticipantsTable(participants, include_email=args.emails)
+    )
     return 0

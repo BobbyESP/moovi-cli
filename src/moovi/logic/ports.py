@@ -7,6 +7,7 @@ from typing import Protocol
 
 from moovi.domain.models import (
     Announcement,
+    AnnouncementContent,
     Assignment,
     Course,
     Forum,
@@ -28,7 +29,13 @@ class MoodleGateway(Protocol):
 
     def course_contents(self, token: Token, course_id: int) -> list[Section]: ...
 
-    def enrolled_users(self, token: Token, course_id: int) -> list[Participant]: ...
+    def enrolled_users(self, token: Token, course_id: int) -> list[Participant]:
+        """Devuelve los participantes del curso.
+
+        Es una operación Moodle: incluye los datos crudos disponibles, como el
+        email, y no aplica políticas de privacidad.
+        """
+        ...
 
     def assignments(
         self, token: Token, course_ids: Sequence[int]
@@ -39,6 +46,10 @@ class MoodleGateway(Protocol):
     def forum_discussions(
         self, token: Token, forum_id: int, limit: int
     ) -> list[Announcement]: ...
+
+    def discussion_post(
+        self, token: Token, post_id: int
+    ) -> AnnouncementContent: ...
 
 
 class TokenStore(Protocol):

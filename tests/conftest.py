@@ -143,6 +143,20 @@ FORUMS: list[dict[str, Any]] = [
     },
 ]
 
+DISCUSSION_POST: dict[str, Any] = {
+    "post": {
+        "id": 9001,
+        "discussionid": 8001,
+        "subject": "Aviso importante",
+        "author": {"id": 8, "fullname": "Profesor Uno"},
+        "message": "<p>Hola, mundo</p><p>Segundo párrafo</p>",
+        "messageformat": 1,
+        "timecreated": 1704067200,
+        "timemodified": 1704153600,
+    },
+    "warnings": [],
+}
+
 ANNOUNCEMENTS: dict[str, Any] = {
     "discussions": [
         {
@@ -178,6 +192,7 @@ class FakeMoodle:
         self.server_errors: set[str] = set()
         self.forums: list[dict[str, Any]] = list(FORUMS)
         self.announcements: dict[str, Any] = ANNOUNCEMENTS
+        self.discussion_post: dict[str, Any] = DISCUSSION_POST
         self.requests: list[tuple[str, dict[str, str]]] = []
         self._server: ThreadingHTTPServer | None = None
         self._thread: threading.Thread | None = None
@@ -281,6 +296,20 @@ class FakeMoodle:
         if function in self.server_errors:
             self._send(handler, 500, {"error": "boom"})
             return
+        if (
+            function == "mod_forum_get_discussion_post"
+            and params.get("postid") != "9001"
+        ):
+            self._send(
+                handler,
+                200,
+                {
+                    "exception": "moodle_exception",
+                    "errorcode": "invalidpostid",
+                    "message": "Invalid post",
+                },
+            )
+            return
 
         responses: dict[str, object] = {
             "core_webservice_get_site_info": SITE_INFO,
@@ -290,6 +319,7 @@ class FakeMoodle:
             "mod_assign_get_assignments": ASSIGNMENTS,
             "mod_forum_get_forums_by_courses": self.forums,
             "mod_forum_get_forum_discussions": self.announcements,
+            "mod_forum_get_discussion_post": self.discussion_post,
         }
         if function not in responses:
             self._send(

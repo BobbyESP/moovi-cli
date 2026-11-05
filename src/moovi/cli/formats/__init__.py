@@ -10,15 +10,16 @@ from moovi.cli.formats.csv import CsvFormatter
 from moovi.cli.formats.json import JsonFormatter
 from moovi.cli.formats.table import TableFormatter
 
-FORMATS = ("table", "json", "raw")
+FORMATTERS = {
+    "table": TableFormatter,
+    "json": JsonFormatter,
+    "raw": CsvFormatter,
+}
+FORMATS = tuple(FORMATTERS)
 
 
 def create_formatter(
     name: str, stream: TextIO | None = None
 ) -> Formatter:
     target = stream or sys.stdout
-    if name == "json":
-        return JsonFormatter(target)
-    if name == "raw":
-        return CsvFormatter(target)
-    return TableFormatter(target)
+    return FORMATTERS[name](target)

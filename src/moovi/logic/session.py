@@ -12,6 +12,7 @@ from typing import TypeVar
 from moovi.domain.errors import ConfigError, InvalidTokenError
 from moovi.domain.models import (
     Announcement,
+    AnnouncementContent,
     Assignment,
     Course,
     Forum,
@@ -115,6 +116,11 @@ class MoodleSession:
         )
 
     def participants(self, course_id: int) -> list[Participant]:
+        """Llamada autenticada a los participantes del curso.
+
+        Resuelve el token y los reintentos, pero no filtra ni transforma datos
+        de negocio.
+        """
         return self._call(
             lambda token: self._gateway.enrolled_users(token, course_id)
         )
@@ -136,4 +142,9 @@ class MoodleSession:
             lambda token: self._gateway.forum_discussions(
                 token, forum_id, limit
             )
+        )
+
+    def discussion_post(self, post_id: int) -> AnnouncementContent:
+        return self._call(
+            lambda token: self._gateway.discussion_post(token, post_id)
         )

@@ -4,161 +4,99 @@ import io
 from datetime import datetime, timezone
 
 from moovi.cli.formats.table import TableFormatter
-from moovi.domain.models import (
-    Announcement,
-    Assignment,
-    Course,
-    Group,
-    Module,
-    Participant,
-    Role,
-    Section,
-    SiteInfo,
-)
-
-STUDENT = Role(5, "student", "")
-TEACHER = Role(3, "editingteacher", "")
+from moovi.cli.tables.base import Column, RichValue
 
 
-def render(method: str, *args, **kwargs) -> str:
+def render(table) -> str:
     output = io.StringIO()
-    formatter = TableFormatter(output)
-    getattr(formatter, method)(*args, **kwargs)
+    TableFormatter(output).render(table)
     return output.getvalue()
 
 
-def test_role_labels_and_groups() -> None:
-    text = render(
-        "participants",
+def test_horizontal_table(make_table) -> None:
+    table = make_table(
+        [Column("id", "ID"), Column("name", "NOMBRE")],
+        [(1, "Ana"), (2, "Luis")],
+    )
+
+    text = render(table)
+
+    assert "ID" in text
+    assert "NOMBRE" in text
+    assert "Ana" in text
+    assert "Luis" in text
+
+
+def test_hidden_columns_are_not_rendered(make_table) -> None:
+    table = make_table(
+        [Column("id", "ID"), Column("internal", "INTERNO", table=False)],
+        [(1, "secreto")],
+    )
+
+    text = render(table)
+
+    assert "INTERNO" not in text
+    assert "secreto" not in text
+
+
+def test_rich_value_uses_text_and_keeps_multiline(make_table) -> None:
+    table = make_table(
+        [Column("message", "MENSAJE")],
         [
-            Participant(
-                7,
-                "Ana",
-                "Alumna",
-                groups=(
-                    Group(146, "PROII_1 (Laboratorio)"),
-                    Group(147, "MODALIDAD_GLOBAL"),
+            (
+                RichValue(
+                    raw="<p>Hola</p><p>Mundo</p>",
+                    text="Hola\nMundo",
+                    json_text=True,
                 ),
-                roles=(STUDENT,),
             )
         ],
-        include_email=False,
     )
 
-    assert "Alumno/a" in text
-    assert "NOMBRE" in text
-    assert "APELLIDOS" in text
-    assert "GRUPOS" in text
-    assert "Ana" in text
-    assert "Alumna" in text
-    assert "PROII_1 (Laboratorio); MODALIDAD_GLOBAL" in text
+    text = render(table)
 
-    assert "Profesor/a" in render(
-        "participants",
-        [Participant(8, "Docente", "Uno", roles=(TEACHER,))],
-        include_email=False,
-    )
-
-
-def test_participants_without_groups_show_dash() -> None:
-    text = render(
-        "participants",
-        [Participant(8, "Sin", "Grupo", roles=(STUDENT,))],
-        include_email=False,
-    )
-
-    assert "—" in text
-
-
-def test_prefers_role_name() -> None:
-    role = Role(10, "guestteacher", "Profesor Invitado")
-    text = render(
-        "participants",
-        [Participant(9, "Invitado", "Docente", roles=(role,))],
-        include_email=False,
-    )
-    assert "Profesor Invitado" in text
-
-
-def test_participants_email_column_only_when_requested() -> None:
-    participant = Participant(
-        7,
-        "Ana",
-        "Alumna",
-        roles=(STUDENT,),
-        email="ana@uvigo.gal",
-    )
-
-    without_email = render("participants", [participant], include_email=False)
-    with_email = render("participants", [participant], include_email=True)
-
-    assert "EMAIL" not in without_email
-    assert "EMAIL" in with_email
-    assert "ana@uvigo.gal" in with_email
-
-
-def test_courses_table_and_empty_state() -> None:
-    courses = [
-        Course(101, "M1", "Matemáticas I", True),
-        Course(102, "M2", "Matemáticas II", False),
-    ]
-    text = render("courses", courses)
-
-    assert "SHORTNAME" in text
-    assert "M1" in text
-    assert "no" in text
-    assert render("courses", []) == "(sin resultados)\n"
-
-
-def test_sections_strip_html_and_mark_hidden_modules() -> None:
-    sections = [
-        Section(
-            1,
-            "Tema 1",
-            "<p>Introducción</p>",
-            (Module(11, "Foro de avisos", "forum", True), Module(12, "Apuntes", "resource", False)),
-        )
-    ]
-    text = render("sections", sections)
-
-    assert "Tema 1" in text
-    assert "Introducción" in text
+    assert "Hola" in text
+    assert "Mundo" in text
     assert "<p>" not in text
-    assert "(oculta)" in text
 
 
-def test_assignments_table() -> None:
-    date = datetime(2024, 1, 1, tzinfo=timezone.utc)
-    text = render(
-        "assignments", [Assignment(501, 101, "Práctica 1", date, None, 100.0)]
+def test_single_row_is_rendered_as_a_detail_view(make_table) -> None:
+    table = make_table(
+        [
+            Column("subject", "ASUNTO"),
+            Column("created", "FECHA"),
+            Column("message", "MENSAJE"),
+        ],
+        [
+            (
+                "Aviso",
+                datetime(2024, 1, 1, tzinfo=timezone.utc),
+                RichValue(raw="<p>Hola</p>", text="Hola\nMundo"),
+            )
+        ],
+        single_row=True,
     )
 
-    assert "Práctica 1" in text
-    assert "2024-01-01 00:00 UTC" in text
-    assert "100" in text
+    text = render(table)
+
+    assert "ASUNTO: Aviso" in text
+    assert "FECHA: 2024-01-01 00:00 UTC" in text
+    assert "MENSAJE: Hola" in text
+    assert "  Mundo" in text
 
 
-def test_announcements_table() -> None:
-    date = datetime(2024, 1, 1, tzinfo=timezone.utc)
-    text = render(
-        "announcements",
-        [Announcement(9001, "Aviso importante", "Profesor Uno", date, 2)],
-    )
+def test_empty_table(make_table) -> None:
+    table = make_table([Column("id", "ID")], [])
 
-    assert "FECHA" in text
-    assert "AUTOR" in text
-    assert "ASUNTO" in text
-    assert "Aviso importante" in text
-    assert "Profesor Uno" in text
-    assert "2024-01-01 00:00 UTC" in text
+    assert render(table) == "(sin resultados)\n"
 
 
-def test_site_info() -> None:
-    text = render(
-        "site_info",
-        SiteInfo(42, "profesor", "Profesor", "Moovi", "4.5", ("f1", "f2")),
-    )
+def test_mismatched_row_length_fails(make_table) -> None:
+    table = make_table([Column("id", "ID")], [(1, 2)])
 
-    assert "Profesor" in text
-    assert "Moovi" in text
-    assert "Funciones disponibles: 2" in text
+    try:
+        render(table)
+    except ValueError as exc:
+        assert "columnas" in str(exc)
+    else:
+        raise AssertionError("La fila inválida no ha fallado")

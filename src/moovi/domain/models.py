@@ -100,3 +100,15 @@ class Announcement:
     num_replies: int = 0
     pinned: bool = False
     locked: bool = False
+
+
+@dataclass(frozen=True, slots=True)
+class AnnouncementContent:
+    id: int
+    discussion_id: int
+    subject: str
+    author: str
+    created: datetime | None = None
+    modified: datetime | None = None
+    message_format: int = 1
+    message: str = ""

@@ -118,9 +118,12 @@ moovi whoami
 ```
 
 ```
-Usuario: Nombre Apellido (usuario, id 12345)
-Sitio: Moovi — 4.5 (Build: 20241007)
-Funciones disponibles: 138
+ID: 12345
+USUARIO: usuario
+NOMBRE: Nombre Apellido
+SITIO: Moovi — 4.5 (Build: 20241007)
+VERSIÓN: 4.5 (Build: 20241007)
+FUNCIONES: 138
 ```
 
 ### `moovi courses`
@@ -150,11 +153,13 @@ moovi contents 12345 --json
 ```
 
 ```
-## Tema 1
-   Introducción
-  - [forum] Foro de avisos
-  - [resource] Apuntes (oculta)
+ID  SECCIÓN  RESUMEN       MÓDULOS
+--  -------  ------------  ------------------------
+1   Tema 1   Introducción  [forum] Foro de avisos
+                           [resource] Apuntes (oculta)
 ```
+
+En JSON, cada sección mantiene sus módulos como objetos, y el resumen incluye `summary` (HTML) y `summary_text` (texto).
 
 ### `moovi students COURSE_ID`
 
@@ -235,6 +240,34 @@ moovi announcements 12345 --forum-id 2217
 
 También puedes usar `--forum-id` si la materia no tiene un foro `news` y quieres consultar otro foro concreto.
 
+### `moovi announcement-content ANNOUNCEMENT_ID`
+
+Muestra el contenido de un anuncio. El id es el que aparece en la columna `ID` de `moovi announcements`.
+
+```bash
+moovi announcement-content 63251
+moovi announcement-content 63251 --json
+moovi announcement-content 63251 --format raw
+```
+
+```
+ID: 63251
+DISCUSIÓN: 48026
+ASUNTO: PROII: Notas finales de la convocatoria de julio
+AUTOR: Daniel González Peña
+FECHA: 2026-07-13 08:51 UTC
+MODIFICADO: 2026-07-13 08:51 UTC
+MENSAJE: Se han publicado en Moovi las notas...
+  La revisión será...
+```
+
+En JSON se incluyen las dos versiones del mensaje:
+
+- `message`: HTML original de Moodle.
+- `message_text`: texto limpio, con párrafos.
+
+En `--format raw` se usa `message_text` aplanado a una línea para no romper el CSV.
+
 ## Opciones comunes
 
 | Opción | Descripción |
@@ -245,7 +278,7 @@ También puedes usar `--forum-id` si la materia no tiene un foro `news` y quiere
 | `--json` | Alias de `--format json`. |
 | `--limit N` | Limita el número de elementos de los listados. |
 
-Con `--format json`, la estructura usa los nombres del dominio (`short_name`, `full_name`, `due_date`...). Los resúmenes de Moodle se devuelven tal cual, incluido el HTML; la salida de tabla los limpia.
+Con `--format json`, la estructura usa los nombres del dominio (`short_name`, `full_name`, `due_date`...). **El HTML de Moodle se conserva tal cual**; la tabla y el CSV lo convierten a texto. Cuando un campo HTML necesita una versión legible en JSON, se añade como `<campo>_text` sin sustituir al original (`summary_text`, `message_text`).
 
 ## Filosofía: la CLI no filtra, tú compones
 
@@ -286,12 +319,13 @@ Columnas de `--format raw`:
 |---|---|
 | `whoami` / `login` | `user_id, username, full_name, site_name, release, functions_count` |
 | `courses` | `id, short_name, full_name, visible, start_date` |
-| `contents` | `section_id, section_name, module_id, module_name, mod_name, visible, url` |
+| `contents` | `section_id, section_name, summary_text, modules` |
 | `students` | `id, first_name, last_name, groups, roles, last_access, email` |
 | `assignments` | `id, course_id, name, due_date, cutoff_date, max_grade` |
 | `announcements` | `id, created, author, subject, num_replies, pinned, locked` |
+| `announcement-content` | `id, discussion_id, subject, author, created, modified, message_text` |
 
-En `contents`, se genera una fila por módulo. Las secciones sin módulos aparecen con los campos de módulo vacíos. En `students`, la columna `email` existe siempre y queda vacía salvo que uses `--emails`.
+En `contents`, se genera una fila por sección y la columna `modules` une los módulos con `;` en formato `mod_name:nombre:1|0`. En `students`, la columna `email` existe siempre y queda vacía salvo que uses `--emails`.
 
 La columna `groups` une los grupos con `;`. Si un nombre de grupo contuviera `;`, se sustituye por `#` para que no rompa el campo. Las comas, comillas y saltos de línea se entrecomillan según el estándar CSV.
 

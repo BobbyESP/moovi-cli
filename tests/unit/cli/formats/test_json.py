@@ -5,83 +5,63 @@ import json
 from datetime import datetime, timezone
 
 from moovi.cli.formats.json import JsonFormatter
-from moovi.domain.models import (
-    Announcement,
-    Course,
-    Group,
-    Participant,
-    Role,
-    Section,
-    SiteInfo,
-)
+from moovi.cli.tables.base import Column, RichValue
 
 
-def render_json(method: str, *args, **kwargs):
+def render(table):
     output = io.StringIO()
-    formatter = JsonFormatter(output)
-    getattr(formatter, method)(*args, **kwargs)
+    JsonFormatter(output).render(table)
     return json.loads(output.getvalue())
 
 
-def test_participants_keep_raw_roles_groups_and_derive_full_name() -> None:
-    data = render_json(
-        "participants",
-        [
-            Participant(
-                7,
-                "Ana",
-                "Alumna",
-                groups=(Group(146, "met_part"),),
-                roles=(Role(5, "student", ""),),
-            )
-        ],
-        include_email=False,
+def test_numbers_and_dates_keep_their_type(make_table) -> None:
+    table = make_table(
+        [Column("id", "ID"), Column("created", "FECHA")],
+        [(7, datetime(2024, 1, 1, tzinfo=timezone.utc))],
     )
 
-    assert data[0]["first_name"] == "Ana"
-    assert data[0]["last_name"] == "Alumna"
-    assert data[0]["full_name"] == "Ana Alumna"
-    assert data[0]["groups"] == [{"id": 146, "name": "met_part"}]
-    assert data[0]["roles"] == [{"id": 5, "short_name": "student", "name": ""}]
+    data = render(table)
+
+    assert data == [{"id": 7, "created": "2024-01-01T00:00:00+00:00"}]
 
 
-def test_courses_serialize_dates_as_iso() -> None:
-    data = render_json(
-        "courses",
-        [Course(101, "M1", "Matemáticas I", True, datetime(2024, 1, 1, tzinfo=timezone.utc))],
-    )
-
-    assert data[0]["start_date"] == "2024-01-01T00:00:00+00:00"
-
-
-def test_announcements_json() -> None:
-    data = render_json(
-        "announcements",
+def test_rich_value_uses_raw_and_adds_text_when_requested(make_table) -> None:
+    table = make_table(
+        [Column("message", "MENSAJE")],
         [
-            Announcement(
-                9001,
-                "Aviso",
-                "Profesor",
-                datetime(2024, 1, 1, tzinfo=timezone.utc),
-                1,
-                True,
-                False,
+            (
+                RichValue(
+                    raw="<p>Hola</p>",
+                    text="Hola",
+                    json_text=True,
+                ),
             )
         ],
     )
 
-    assert data[0]["subject"] == "Aviso"
-    assert data[0]["author"] == "Profesor"
-    assert data[0]["created"] == "2024-01-01T00:00:00+00:00"
-    assert data[0]["pinned"] is True
+    [row] = render(table)
+
+    assert row["message"] == "<p>Hola</p>"
+    assert row["message_text"] == "Hola"
 
 
-def test_sections_and_site_info() -> None:
-    sections = render_json("sections", [Section(1, "Tema 1", "", ())])
-    info = render_json(
-        "site_info", SiteInfo(42, "profesor", "Profesor", "Moovi", "4.5", ("f1",))
+def test_rich_value_without_json_text_does_not_add_companion(make_table) -> None:
+    table = make_table(
+        [Column("roles", "ROLES")],
+        [(RichValue(raw=("student",), text="Alumno/a"),)],
     )
 
-    assert sections[0]["name"] == "Tema 1"
-    assert info["user_id"] == 42
-    assert info["functions"] == ["f1"]
+    [row] = render(table)
+
+    assert row["roles"] == ["student"]
+    assert "roles_text" not in row
+
+
+def test_single_row_outputs_an_object(make_table) -> None:
+    table = make_table(
+        [Column("subject", "ASUNTO")],
+        [("Aviso",)],
+        single_row=True,
+    )
+
+    assert render(table) == {"subject": "Aviso"}

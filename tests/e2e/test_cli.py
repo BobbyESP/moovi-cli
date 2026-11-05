@@ -236,13 +236,10 @@ def test_contents_raw_csv(run_cli, credentials) -> None:
     assert rows[0] == [
         "section_id",
         "section_name",
-        "module_id",
-        "module_name",
-        "mod_name",
-        "visible",
-        "url",
+        "summary_text",
+        "modules",
     ]
-    assert any(row[4] == "forum" for row in rows[1:])
+    assert rows[1][3] == "forum:Foro de avisos:1;resource:Apuntes:0"
 
 
 def test_assignments_raw_csv(run_cli, credentials) -> None:
@@ -261,6 +258,72 @@ def test_assignments_raw_csv(run_cli, credentials) -> None:
         "max_grade",
     ]
     assert rows[1][2] == "Práctica 1"
+
+
+def test_announcement_content_json(run_cli, credentials) -> None:
+    assert run_cli("login", extra_env=credentials).returncode == 0
+
+    result = run_cli(
+        "announcement-content", "9001", "--json", extra_env=credentials
+    )
+
+    assert result.returncode == 0, result.stderr
+    data = json.loads(result.stdout)
+    assert data["subject"] == "Aviso importante"
+    assert data["author"] == "Profesor Uno"
+    assert data["discussion_id"] == 8001
+    assert data["message_format"] == 1
+    assert data["message"] == "<p>Hola, mundo</p><p>Segundo párrafo</p>"
+    assert data["message_text"] == "Hola, mundo\nSegundo párrafo"
+
+
+def test_announcement_content_table(run_cli, credentials) -> None:
+    assert run_cli("login", extra_env=credentials).returncode == 0
+
+    result = run_cli("announcement-content", "9001", extra_env=credentials)
+
+    assert result.returncode == 0, result.stderr
+    assert "ASUNTO: Aviso importante" in result.stdout
+    assert "AUTOR: Profesor Uno" in result.stdout
+    assert "MENSAJE: Hola, mundo" in result.stdout
+    assert "  Segundo párrafo" in result.stdout
+
+
+def test_announcement_content_raw(run_cli, credentials) -> None:
+    assert run_cli("login", extra_env=credentials).returncode == 0
+
+    result = run_cli(
+        "announcement-content",
+        "9001",
+        "--format",
+        "raw",
+        extra_env=credentials,
+    )
+
+    assert result.returncode == 0, result.stderr
+    rows = list(csv.reader(io.StringIO(result.stdout)))
+    assert rows[0] == [
+        "id",
+        "discussion_id",
+        "subject",
+        "author",
+        "created",
+        "modified",
+        "message_text",
+    ]
+    assert rows[1][6] == "Hola, mundo Segundo párrafo"
+
+
+def test_announcement_content_invalid_id(run_cli, credentials) -> None:
+    assert run_cli("login", extra_env=credentials).returncode == 0
+
+    result = run_cli(
+        "announcement-content", "123", "--json", extra_env=credentials
+    )
+
+    assert result.returncode == 3
+    payload = json.loads(result.stderr)
+    assert payload["error"]["type"] == "ApiError"
 
 
 def test_announcements_json(run_cli, credentials) -> None:

@@ -8,6 +8,7 @@ import sys
 from moovi.cli.context import Services
 from moovi.cli.credentials import prompt_password, prompt_username
 from moovi.cli.formats.base import Formatter
+from moovi.cli.tables import SiteInfoTable
 from moovi.domain.errors import ConfigError, InvalidTokenError
 
 
@@ -54,12 +55,12 @@ def _login(
                 "No hay credenciales para --no-input. Define MOOVI_USER y "
                 "MOOVI_PASSWORD en el entorno."
             ) from exc
-        formatter.site_info(info)
+        formatter.render(SiteInfoTable(info))
         return 0
 
     if not args.force:
         try:
-            formatter.site_info(services.auth.login())
+            formatter.render(SiteInfoTable(services.auth.login()))
             return 0
         except (ConfigError, InvalidTokenError):
             pass
@@ -68,7 +69,7 @@ def _login(
     username = prompt_username(suggested)
     password = prompt_password()
     info = services.auth.login_interactive(username, password)
-    formatter.site_info(info)
+    formatter.render(SiteInfoTable(info))
     if suggested is not None and username != suggested:
         sys.stderr.write(
             f"Aviso: token guardado para '{username}'. Actualiza o elimina "
@@ -80,5 +81,5 @@ def _login(
 def _whoami(
     args: argparse.Namespace, services: Services, formatter: Formatter
 ) -> int:
-    formatter.site_info(services.auth.whoami())
+    formatter.render(SiteInfoTable(services.auth.whoami()))
     return 0

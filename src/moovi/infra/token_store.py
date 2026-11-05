@@ -1,4 +1,4 @@
-"""Persistencia del token en un fichero local con permisos 0600."""
+"""Adaptador de ``TokenStore``: fichero local con permisos 0600."""
 
 from __future__ import annotations
 
@@ -8,9 +8,10 @@ from pathlib import Path
 from typing import Any
 
 from moovi.domain.values import Token
+from moovi.logic.ports import TokenStore
 
 
-class FileTokenStore:
+class FileTokenStore(TokenStore):
     def __init__(self, path: Path) -> None:
         self._path = Path(path)
 

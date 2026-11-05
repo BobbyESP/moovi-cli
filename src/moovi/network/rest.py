@@ -1,7 +1,7 @@
-"""Cliente REST de Moodle.
+"""Adaptador REST de Moodle.
 
-Implementa el puerto ``MoodleGateway``. No conoce la CLI, la configuración ni
-la caché de tokens: recibe el token en cada llamada.
+Implementa el puerto de salida ``MoodleGateway``. No conoce la CLI, la
+configuración ni la caché de tokens: recibe el token en cada llamada.
 """
 
 from __future__ import annotations
@@ -21,6 +21,7 @@ from moovi.domain.errors import (
 )
 from moovi.domain.models import (
     Announcement,
+    AnnouncementContent,
     Assignment,
     Course,
     Forum,
@@ -29,8 +30,10 @@ from moovi.domain.models import (
     SiteInfo,
 )
 from moovi.domain.values import Token
+from moovi.logic.ports import MoodleGateway
 from moovi.network.errors import raise_for_moodle_error
 from moovi.network.mappers import (
+    map_announcement_content,
     map_announcements,
     map_assignments,
     map_courses,
@@ -54,11 +57,12 @@ READ_ONLY_FUNCTIONS = frozenset(
         "mod_assign_get_assignments",
         "mod_forum_get_forums_by_courses",
         "mod_forum_get_forum_discussions",
+        "mod_forum_get_discussion_post",
     }
 )
 
 
-class MoodleRestClient:
+class MoodleRestClient(MoodleGateway):
     def __init__(
         self,
         base_url: str,
@@ -187,6 +191,16 @@ class MoodleRestClient:
             perpage=limit,
         )
         return map_announcements(data)
+
+    def discussion_post(
+        self, token: Token, post_id: int
+    ) -> AnnouncementContent:
+        data = self.call(
+            token,
+            "mod_forum_get_discussion_post",
+            postid=post_id,
+        )
+        return map_announcement_content(data)
 
 
 def _as_mapping(data: object) -> Mapping[str, Any]:

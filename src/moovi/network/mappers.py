@@ -6,8 +6,10 @@ from collections.abc import Mapping
 from datetime import datetime, timezone
 from typing import Any
 
+from moovi.domain.errors import ApiError
 from moovi.domain.models import (
     Announcement,
+    AnnouncementContent,
     Assignment,
     Course,
     Forum,
@@ -210,6 +212,38 @@ def _map_announcement(item: Mapping[str, Any]) -> Announcement:
         num_replies=int(item.get("numreplies", 0) or 0),
         pinned=_as_bool(item.get("pinned")),
         locked=_as_bool(item.get("locked")),
+    )
+
+
+def map_announcement_content(data: object) -> AnnouncementContent:
+    if not isinstance(data, Mapping):
+        raise ApiError(
+            "invalidresponse",
+            "Respuesta inesperada de mod_forum_get_discussion_post.",
+        )
+    post = data.get("post")
+    if not isinstance(post, Mapping):
+        raise ApiError(
+            "invalidresponse",
+            "La respuesta no contiene el post del anuncio.",
+        )
+    author = post.get("author")
+    author_name = ""
+    if isinstance(author, Mapping):
+        author_name = str(author.get("fullname") or "")
+    try:
+        message_format = int(post.get("messageformat", 1))
+    except (TypeError, ValueError):
+        message_format = 1
+    return AnnouncementContent(
+        id=int(post.get("id", 0)),
+        discussion_id=int(post.get("discussionid", 0)),
+        subject=str(post.get("subject") or ""),
+        author=author_name,
+        created=timestamp(post.get("timecreated")),
+        modified=timestamp(post.get("timemodified")),
+        message_format=message_format,
+        message=str(post.get("message") or ""),
     )
 
 

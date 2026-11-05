@@ -7,7 +7,7 @@ from moovi.domain.errors import (
     ConfigError,
     NoAnnouncementsForumError,
 )
-from moovi.domain.models import Announcement, Forum
+from moovi.domain.models import Announcement, AnnouncementContent, Forum
 from moovi.logic.services.announcements import AnnouncementService
 
 NEWS = Forum(2217, 101, "Foro de novas", "news", True)
@@ -15,6 +15,7 @@ GENERAL = Forum(2218, 101, "Foro xeral", "general", False)
 NEWS_2 = Forum(2219, 101, "Avisos", "news", True)
 NEWS_OPTIONAL = Forum(2220, 101, "Noticias", "news", False)
 ANNOUNCEMENT = Announcement(9001, "Aviso", "Profesor", None, 0, False, False)
+CONTENT = AnnouncementContent(9001, 8001, "Aviso", "Profesor", message="<p>Hola</p>")
 
 
 class FakeSession:
@@ -31,6 +32,10 @@ class FakeSession:
     ) -> list[Announcement]:
         self.calls.append((forum_id, limit))
         return [ANNOUNCEMENT]
+
+    def discussion_post(self, post_id: int) -> AnnouncementContent:
+        assert post_id == 9001
+        return CONTENT
 
 
 def test_selects_the_single_news_forum() -> None:
@@ -94,3 +99,9 @@ def test_raises_when_several_news_forums_are_not_forced() -> None:
 
     with pytest.raises(AmbiguousForumError):
         service.list_announcements(101)
+
+
+def test_get_content_delegates() -> None:
+    service = AnnouncementService(FakeSession([NEWS]))
+
+    assert service.get_content(9001) == CONTENT

@@ -1,6 +1,7 @@
 from datetime import timezone
 
 from moovi.network.mappers import (
+    map_announcement_content,
     map_announcements,
     map_assignments,
     map_courses,
@@ -247,6 +248,32 @@ def test_maps_announcements() -> None:
     assert announcement.num_replies == 2
     assert announcement.pinned is True
     assert announcement.locked is False
+
+
+def test_maps_announcement_content() -> None:
+    content = map_announcement_content(
+        {
+            "post": {
+                "id": 9001,
+                "discussionid": 8001,
+                "subject": "Aviso",
+                "author": {"fullname": "Profesor Uno"},
+                "message": "<p>Hola</p>",
+                "messageformat": 1,
+                "timecreated": 1704067200,
+                "timemodified": 1704153600,
+            }
+        }
+    )
+
+    assert content.id == 9001
+    assert content.discussion_id == 8001
+    assert content.subject == "Aviso"
+    assert content.author == "Profesor Uno"
+    assert content.created is not None
+    assert content.modified is not None
+    assert content.message_format == 1
+    assert content.message == "<p>Hola</p>"
 
 
 def test_mappers_tolerate_bad_shapes() -> None:

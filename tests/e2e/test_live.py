@@ -34,7 +34,7 @@ def test_live_whoami() -> None:
     )
 
     assert result.returncode == 0, result.stderr
-    assert "Usuario:" in result.stdout
+    assert "USUARIO:" in result.stdout
 
 
 def test_live_courses() -> None:

@@ -7,7 +7,7 @@ from moovi.domain.errors import (
     ConfigError,
     NoAnnouncementsForumError,
 )
-from moovi.domain.models import Announcement, Forum
+from moovi.domain.models import Announcement, AnnouncementContent, Forum
 from moovi.logic.session import MoodleSession
 
 DEFAULT_ANNOUNCEMENTS_LIMIT = 10
@@ -27,6 +27,9 @@ class AnnouncementService:
         forums = self._session.course_forums(course_id)
         forum = self._select_forum(course_id, forums, forum_id)
         return self._session.forum_discussions(forum.id, limit)
+
+    def get_content(self, post_id: int) -> AnnouncementContent:
+        return self._session.discussion_post(post_id)
 
     def _select_forum(
         self,

@@ -66,6 +66,14 @@ Si hay varios foros de noticias, el comando muestra los ids y pide elegir:
 moovi announcements 12345 --forum-id 2217 --json
 ```
 
+Para leer un anuncio concreto, usa el id de la columna `ID`:
+
+```bash
+moovi announcement-content 63251 --json
+```
+
+En JSON, `message` es el HTML original y `message_text` el texto limpio. En tabla/CSV se usa el texto limpio.
+
 ## Alumnado de un grupo
 
 ```bash

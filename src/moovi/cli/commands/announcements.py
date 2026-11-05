@@ -7,6 +7,7 @@ import sys
 
 from moovi.cli.context import Services
 from moovi.cli.formats.base import Formatter
+from moovi.cli.tables import AnnouncementContentTable, AnnouncementsTable
 from moovi.domain.errors import (
     AmbiguousForumError,
     NoAnnouncementsForumError,
@@ -33,6 +34,16 @@ def register(
         help="Usar un foro concreto si hay ambigüedad",
     )
     announcements.set_defaults(handler=_announcements)
+
+    content = subparsers.add_parser(
+        "announcement-content",
+        parents=[common],
+        help="Ver el contenido de un anuncio de Moovi",
+    )
+    content.add_argument(
+        "announcement_id", type=_positive_int, metavar="ANNOUNCEMENT_ID"
+    )
+    content.set_defaults(handler=_announcement_content)
 
 
 def _announcements(
@@ -64,7 +75,15 @@ def _announcements(
         )
         return 2
 
-    formatter.announcements(items)
+    formatter.render(AnnouncementsTable(items))
+    return 0
+
+
+def _announcement_content(
+    args: argparse.Namespace, services: Services, formatter: Formatter
+) -> int:
+    content = services.announcements.get_content(args.announcement_id)
+    formatter.render(AnnouncementContentTable(content))
     return 0
 
 

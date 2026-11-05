@@ -65,6 +65,55 @@ def test_layers_respect_dependency_rule() -> None:
     assert not violations, "\n".join(violations)
 
 
+def test_formats_only_depend_on_generic_helpers() -> None:
+    allowed = (
+        "moovi.cli.tables.base",
+        "moovi.cli.text",
+    )
+    forbidden = (
+        "moovi.domain",
+        "moovi.logic",
+        "moovi.network",
+        "moovi.infra",
+        "moovi.cli.tables.",
+    )
+    violations: list[str] = []
+    for path in sorted((SRC / "moovi" / "cli" / "formats").rglob("*.py")):
+        for imported in _imports(path):
+            if not imported.startswith("moovi."):
+                continue
+            if any(
+                imported == prefix or imported.startswith(prefix + ".")
+                for prefix in allowed
+            ):
+                continue
+            if any(
+                imported == prefix or imported.startswith(prefix)
+                for prefix in forbidden
+            ):
+                violations.append(f"{path.name} importa {imported}")
+    assert not violations, "\n".join(violations)
+
+
+def test_tables_do_not_depend_on_formatters() -> None:
+    violations: list[str] = []
+    for path in sorted((SRC / "moovi" / "cli" / "tables").rglob("*.py")):
+        for imported in _imports(path):
+            if imported == "moovi.cli.formats" or imported.startswith(
+                "moovi.cli.formats."
+            ):
+                violations.append(f"{path.name} importa {imported}")
+    assert not violations, "\n".join(violations)
+
+
+def test_formats_do_not_parse_html() -> None:
+    violations: list[str] = []
+    for path in sorted((SRC / "moovi" / "cli" / "formats").rglob("*.py")):
+        if "html.parser" in _imports(path):
+            violations.append(path.name)
+    assert not violations, f"HTMLParser en formats: {violations}"
+
+
 def test_domain_has_no_third_party_imports() -> None:
     allowed_roots = {
         "__future__",

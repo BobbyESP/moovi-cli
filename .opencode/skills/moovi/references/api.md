@@ -33,6 +33,7 @@ Moovi es Moodle 4.5 y expone los servicios web oficiales. No se usa scraping.
 | `mod_assign_get_assignments` | `courseids[0]` | tareas por curso |
 | `mod_forum_get_forums_by_courses` | `courseids[0]` | foros del curso, incluido `type="news"` |
 | `mod_forum_get_forum_discussions` | `forumid`, `sortorder`, `page`, `perpage` | anuncios del foro de noticias |
+| `mod_forum_get_discussion_post` | `postid` | contenido de un anuncio |
 
 Todas están en la allowlist de `network/rest.py`. La CLI no expone un `call` genérico.
 

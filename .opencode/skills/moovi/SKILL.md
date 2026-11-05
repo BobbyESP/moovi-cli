@@ -39,6 +39,7 @@ CLI de solo lectura sobre la API oficial de Moovi. No usa scraping y no modifica
    moovi students <course_id> --json   # incluye groups y roles
    moovi assignments <course_id> --json
    moovi announcements <course_id> --json   # foro de noticias de Moovi
+   moovi announcement-content <announcement_id> --json
    ```
 
 4. Resume el resultado. No vuelques listados completos si basta con un resumen.

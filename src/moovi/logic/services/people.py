@@ -15,6 +15,11 @@ class PeopleService:
     def list_participants(
         self, course_id: int, *, include_email: bool = False
     ) -> list[Participant]:
+        """Caso de uso: participantes del curso.
+
+        Por defecto oculta el email; solo lo conserva si ``include_email`` es
+        verdadero.
+        """
         participants = self._session.participants(course_id)
         if include_email:
             return participants

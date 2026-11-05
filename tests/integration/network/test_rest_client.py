@@ -91,3 +91,12 @@ def test_forum_discussions(fake_moodle) -> None:
     assert params["sortorder"] == "-1"
     assert params["page"] == "0"
     assert params["perpage"] == "3"
+
+
+def test_discussion_post(fake_moodle) -> None:
+    content = client(fake_moodle).discussion_post(Token("test-token"), 9001)
+
+    assert content.subject == "Aviso importante"
+    assert content.message == "<p>Hola, mundo</p><p>Segundo párrafo</p>"
+    _, params = fake_moodle.requests[-1]
+    assert params["postid"] == "9001"

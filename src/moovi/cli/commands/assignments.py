@@ -6,6 +6,7 @@ import argparse
 
 from moovi.cli.context import Services
 from moovi.cli.formats.base import Formatter
+from moovi.cli.tables import AssignmentsTable
 
 
 def register(
@@ -28,5 +29,5 @@ def _assignments(
     limit = getattr(args, "limit", None)
     if limit:
         items = items[:limit]
-    formatter.assignments(items)
+    formatter.render(AssignmentsTable(items))
     return 0

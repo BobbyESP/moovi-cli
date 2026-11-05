@@ -6,145 +6,70 @@ import sys
 from collections.abc import Sequence
 from typing import TextIO
 
-from moovi.cli.formats.common import (
-    format_datetime,
-    format_grade,
-    role_label,
-    shorten,
-    strip_html,
-)
-from moovi.domain.models import (
-    Announcement,
-    Assignment,
-    Course,
-    Participant,
-    Section,
-    SiteInfo,
-)
+from moovi.cli.formats.base import Formatter
+from moovi.cli.formats.common import table_value
+from moovi.cli.tables.base import Column, Table, row_items
 
 
-class TableFormatter:
+class TableFormatter(Formatter):
     def __init__(self, stream: TextIO | None = None) -> None:
         self._stream = stream or sys.stdout
 
-    def site_info(self, info: SiteInfo) -> None:
-        self._stream.write(
-            f"Usuario: {info.full_name} ({info.username}, id {info.user_id})\n"
-        )
-        self._stream.write(f"Sitio: {info.site_name} — {info.release}\n")
-        self._stream.write(f"Funciones disponibles: {len(info.functions)}\n")
-
-    def courses(self, courses: Sequence[Course]) -> None:
-        rows = [
-            [
-                str(course.id),
-                course.short_name,
-                course.full_name,
-                "sí" if course.visible else "no",
-            ]
-            for course in courses
-        ]
-        self._table(["ID", "SHORTNAME", "NOMBRE", "VISIBLE"], rows)
-
-    def sections(self, sections: Sequence[Section]) -> None:
-        if not sections:
-            self._stream.write("(sin secciones)\n")
-            return
-        for section in sections:
-            name = strip_html(section.name) or f"Sección {section.id}"
-            self._stream.write(f"## {name}\n")
-            summary = strip_html(section.summary)
-            if summary:
-                self._stream.write(f"   {shorten(summary, 300)}\n")
-            for module in section.modules:
-                hidden = "" if module.visible else " (oculta)"
-                self._stream.write(
-                    f"  - [{module.mod_name}] {strip_html(module.name)}{hidden}\n"
-                )
-            self._stream.write("\n")
-
-    def participants(
-        self,
-        participants: Sequence[Participant],
-        *,
-        include_email: bool,
-    ) -> None:
-        headers = [
-            "ID",
-            "NOMBRE",
-            "APELLIDOS",
-            "GRUPOS",
-            "ROLES",
-            "ÚLTIMO ACCESO",
-        ]
-        if include_email:
-            headers.append("EMAIL")
-        rows: list[list[str]] = []
-        for participant in participants:
-            row = [
-                str(participant.id),
-                participant.first_name or "—",
-                participant.last_name or "—",
-                "; ".join(
-                    group.name for group in participant.groups if group.name
-                )
-                or "—",
-                ", ".join(role_label(role) for role in participant.roles) or "—",
-                format_datetime(participant.last_access),
-            ]
-            if include_email:
-                row.append(participant.email or "—")
-            rows.append(row)
-        self._table(headers, rows)
-
-    def assignments(self, assignments: Sequence[Assignment]) -> None:
-        rows = [
-            [
-                str(assignment.id),
-                assignment.name,
-                format_datetime(assignment.due_date),
-                format_datetime(assignment.cutoff_date),
-                format_grade(assignment.max_grade),
-            ]
-            for assignment in assignments
-        ]
-        self._table(
-            ["ID", "NOMBRE", "ENTREGA", "CIERRE", "NOTA MÁX."], rows
-        )
-
-    def announcements(self, announcements: Sequence[Announcement]) -> None:
-        rows = [
-            [
-                str(announcement.id),
-                format_datetime(announcement.created),
-                announcement.author,
-                announcement.subject,
-                str(announcement.num_replies),
-            ]
-            for announcement in announcements
-        ]
-        self._table(
-            ["ID", "FECHA", "AUTOR", "ASUNTO", "RESPUESTAS"], rows
-        )
-
-    def _table(self, headers: Sequence[str], rows: Sequence[Sequence[str]]) -> None:
-        if not rows:
+    def render(self, table: Table) -> None:
+        columns = [column for column in table.columns if column.table]
+        if not table.rows:
             self._stream.write("(sin resultados)\n")
             return
+        if table.single_row:
+            self._render_single(table, columns)
+            return
+        self._render_grid(table, columns)
 
-        widths = [len(header) for header in headers]
-        for row in rows:
-            for index, cell in enumerate(row):
-                widths[index] = max(widths[index], len(cell))
+    def _render_single(self, table: Table, columns: Sequence[Column]) -> None:
+        values = _visible_values(table, columns, table.rows[0])
+        for column, value in zip(columns, values):
+            lines = table_value(value).splitlines() or [""]
+            self._stream.write(f"{column.header}: {lines[0]}\n")
+            for line in lines[1:]:
+                self._stream.write(f"  {line}\n")
 
-        self._stream.write(
-            "  ".join(h.ljust(w) for h, w in zip(headers, widths)).rstrip() + "\n"
-        )
-        self._stream.write(
-            "  ".join("-" * w for w in widths).rstrip() + "\n"
-        )
-        for row in rows:
-            self._stream.write(
-                "  ".join(cell.ljust(w) for cell, w in zip(row, widths)).rstrip()
-                + "\n"
+    def _render_grid(self, table: Table, columns: Sequence[Column]) -> None:
+        rendered_rows: list[list[list[str]]] = []
+        for row in table.rows:
+            values = _visible_values(table, columns, row)
+            rendered_rows.append(
+                [table_value(value).splitlines() or [""] for value in values]
             )
+
+        headers = [column.header for column in columns]
+        widths = [len(header) for header in headers]
+        for row in rendered_rows:
+            for index, lines in enumerate(row):
+                widths[index] = max(widths[index], *(len(line) for line in lines))
+
+        self._write_line(headers, widths)
+        self._write_line(["-" * width for width in widths], widths)
+        for row in rendered_rows:
+            height = max((len(lines) for lines in row), default=1)
+            for line_index in range(height):
+                cells = [
+                    lines[line_index] if line_index < len(lines) else ""
+                    for lines in row
+                ]
+                self._write_line(cells, widths)
+
+    def _write_line(self, cells: Sequence[str], widths: Sequence[int]) -> None:
+        self._stream.write(
+            "  ".join(cell.ljust(width) for cell, width in zip(cells, widths)).rstrip()
+            + "\n"
+        )
+
+
+def _visible_values(
+    table: Table, columns: Sequence[Column], row: Sequence[object]
+) -> list[object]:
+    return [
+        value
+        for column, value in row_items(table, row)
+        if column.table
+    ]
