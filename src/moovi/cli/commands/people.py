@@ -13,21 +13,21 @@ def register(
     subparsers: argparse._SubParsersAction[argparse.ArgumentParser],
     common: argparse.ArgumentParser,
 ) -> None:
-    students = subparsers.add_parser(
-        "students",
+    participants = subparsers.add_parser(
+        "participants",
         parents=[common],
         help="Listar las personas matriculadas en un curso",
     )
-    students.add_argument("course_id", type=int, metavar="COURSE_ID")
-    students.add_argument(
+    participants.add_argument("course_id", type=int, metavar="COURSE_ID")
+    participants.add_argument(
         "--emails",
         action="store_true",
         help="Incluir direcciones de correo (por defecto se omiten)",
     )
-    students.set_defaults(handler=_students)
+    participants.set_defaults(handler=_participants)
 
 
-def _students(
+def _participants(
     args: argparse.Namespace, services: Services, formatter: Formatter
 ) -> int:
     participants = services.people.list_participants(

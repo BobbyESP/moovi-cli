@@ -36,7 +36,7 @@ CLI de solo lectura sobre la API oficial de Moovi. No usa scraping y no modifica
 
    ```bash
    moovi contents <course_id> --json
-   moovi students <course_id> --json   # incluye groups y roles
+   moovi participants <course_id> --json   # incluye groups y roles
    moovi assignments <course_id> --json
    moovi announcements <course_id> --json   # foro de noticias de Moovi
    moovi announcement-content <announcement_id> --json
@@ -49,7 +49,7 @@ CLI de solo lectura sobre la API oficial de Moovi. No usa scraping y no modifica
 - Usa `--json` (o `--format json`) cuando vayas a procesar la salida; para mostrar al usuario puede bastar la tabla.
 - No pidas filtros nuevos: usa `--format raw` (CSV) con `grep`/`sort`/`cut`/`awk`, o `--json` con `jq`. Hay ejemplos en la sección “Filosofía” del README.
 - Usa `--limit N` en listados largos.
-- No incluyas correos del alumnado salvo que el usuario lo pida: `students` los omite por defecto; `--emails` los añade.
+- No incluyas correos del alumnado salvo que el usuario lo pida: `participants` los omite por defecto; `--emails` los añade.
 - No consultes datos personales que no necesites (GDPR).
 - No intentes escrituras: no existen comandos para ello.
 - `announcements` es específico del foro de noticias de Moovi. Si el comando pide `--forum-id`, usa el id de un candidato; no inventes ids.

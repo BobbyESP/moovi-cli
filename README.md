@@ -85,7 +85,7 @@ conda activate moovi   # o usa `conda run -n moovi --no-capture-output moovi ...
 moovi login
 moovi courses
 moovi contents 12345
-moovi students 12345
+moovi participants 12345
 moovi assignments 12345
 moovi announcements 12345
 
@@ -161,14 +161,14 @@ ID  SECCIÓN  RESUMEN       MÓDULOS
 
 En JSON, cada sección mantiene sus módulos como objetos, y el resumen incluye `summary` (HTML) y `summary_text` (texto).
 
-### `moovi students COURSE_ID`
+### `moovi participants COURSE_ID`
 
 Lista las personas matriculadas y sus roles. **Por defecto omite el correo electrónico.**
 
 ```bash
-moovi students 12345
-moovi students 12345 --emails
-moovi students 12345 --json
+moovi participants 12345
+moovi participants 12345 --emails
+moovi participants 12345 --json
 ```
 
 ```
@@ -289,16 +289,16 @@ Con `--format json`, la estructura usa los nombres del dominio (`short_name`, `f
 moovi courses --format raw | grep -i "matemáticas"
 
 # Alumnado de un curso (la columna roles usa los shortname de Moodle)
-moovi students 1686 --format raw | grep ',student'
+moovi participants 1686 --format raw | grep ',student'
 
 # Profesorado
-moovi students 1686 --format raw | grep -E ',(editingteacher|teacher)'
+moovi participants 1686 --format raw | grep -E ',(editingteacher|teacher)'
 
 # Alumnado de un grupo concreto
-moovi students 1686 --format raw | grep ',PROII_1 (Laboratorio),'
+moovi participants 1686 --format raw | grep ',PROII_1 (Laboratorio),'
 
 # Alumnado ordenado por apellidos
-moovi students 1686 --format raw | tail -n +2 | sort -t, -k3
+moovi participants 1686 --format raw | tail -n +2 | sort -t, -k3
 
 # Tareas ordenadas por fecha de entrega
 moovi assignments 1686 --format raw | tail -n +2 | sort -t, -k4
@@ -307,7 +307,7 @@ moovi assignments 1686 --format raw | tail -n +2 | sort -t, -k4
 moovi courses --format raw | tail -n +2 | cut -d, -f2
 
 # Filtro estructurado con jq
-moovi students 1686 --json \
+moovi participants 1686 --json \
   | jq -r '.[] | select(any(.roles[]; .short_name == "student")) | [.id, .full_name] | @tsv'
 ```
 
@@ -320,12 +320,12 @@ Columnas de `--format raw`:
 | `whoami` / `login` | `user_id, username, full_name, site_name, release, functions_count` |
 | `courses` | `id, short_name, full_name, visible, start_date` |
 | `contents` | `section_id, section_name, summary_text, modules` |
-| `students` | `id, first_name, last_name, groups, roles, last_access, email` |
+| `participants` | `id, first_name, last_name, groups, roles, last_access, email` |
 | `assignments` | `id, course_id, name, due_date, cutoff_date, max_grade` |
 | `announcements` | `id, created, author, subject, num_replies, pinned, locked` |
 | `announcement-content` | `id, discussion_id, subject, author, created, modified, message_text` |
 
-En `contents`, se genera una fila por sección y la columna `modules` une los módulos con `;` en formato `mod_name:nombre:1|0`. En `students`, la columna `email` existe siempre y queda vacía salvo que uses `--emails`.
+En `contents`, se genera una fila por sección y la columna `modules` une los módulos con `;` en formato `mod_name:nombre:1|0`. En `participants`, la columna `email` existe siempre y queda vacía salvo que uses `--emails`.
 
 La columna `groups` une los grupos con `;`. Si un nombre de grupo contuviera `;`, se sustituye por `#` para que no rompa el campo. Las comas, comillas y saltos de línea se entrecomillan según el estándar CSV.
 
@@ -392,7 +392,7 @@ Moovi no responde o está en mantenimiento. La CLI reintenta una vez los errores
 - `moovi login` pide la contraseña por terminal con `getpass`, sin eco y sin dejarla en el historial.
 - Un agente no debe pedirte la contraseña por chat: si no hay sesión, debe indicarte que ejecutes `moovi login`.
 - El cliente limita las funciones a una lista de solo lectura.
-- `students` oculta los correos salvo que uses `--emails`.
+- `participants` oculta los correos salvo que uses `--emails`.
 - Los datos de alumnado que consultes pueden acabar en el contexto de un agente o en los registros de tu terminal. Pide solo lo necesario y no vuelques listados completos sin motivo.
 
 ## Desarrollo

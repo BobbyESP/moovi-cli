@@ -41,13 +41,13 @@ Cada sección trae `name`, `summary` y `modules`; cada módulo trae `mod_name`, 
 ## Listar alumnado sin correos
 
 ```bash
-moovi students 12345 --json
+moovi participants 12345 --json
 ```
 
 Con correos, solo si el usuario lo pide:
 
 ```bash
-moovi students 12345 --emails --json
+moovi participants 12345 --emails --json
 ```
 
 Cada persona incluye `groups` (grupos del curso creados por el profesorado) y `roles`.
@@ -77,7 +77,7 @@ En JSON, `message` es el HTML original y `message_text` el texto limpio. En tabl
 ## Alumnado de un grupo
 
 ```bash
-moovi students 12345 --format raw | grep ',PROII_1 (Laboratorio),'
+moovi participants 12345 --format raw | grep ',PROII_1 (Laboratorio),'
 ```
 
 En `--format raw`, los grupos van en la columna `groups` separados por `;`.

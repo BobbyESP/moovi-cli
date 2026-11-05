@@ -94,10 +94,10 @@ def test_retries_after_invalid_token(run_cli, credentials, fake_moodle) -> None:
     assert fake_moodle.count("/login/token.php") == 2
 
 
-def test_students_hide_email_by_default(run_cli, credentials) -> None:
+def test_participants_hide_email_by_default(run_cli, credentials) -> None:
     assert run_cli("login", extra_env=credentials).returncode == 0
 
-    result = run_cli("students", "101", "--json", extra_env=credentials)
+    result = run_cli("participants", "101", "--json", extra_env=credentials)
 
     assert result.returncode == 0, result.stderr
     participants = json.loads(result.stdout)
@@ -115,10 +115,10 @@ def test_students_hide_email_by_default(run_cli, credentials) -> None:
     assert ana["roles"] == [{"id": 5, "short_name": "student", "name": ""}]
 
 
-def test_students_without_groups_return_empty_list(run_cli, credentials) -> None:
+def test_participants_without_groups_return_empty_list(run_cli, credentials) -> None:
     assert run_cli("login", extra_env=credentials).returncode == 0
 
-    result = run_cli("students", "101", "--json", extra_env=credentials)
+    result = run_cli("participants", "101", "--json", extra_env=credentials)
 
     assert result.returncode == 0, result.stderr
     participants = json.loads(result.stdout)
@@ -128,11 +128,11 @@ def test_students_without_groups_return_empty_list(run_cli, credentials) -> None
     assert sin_grupo["groups"] == []
 
 
-def test_students_can_include_email(run_cli, credentials) -> None:
+def test_participants_can_include_email(run_cli, credentials) -> None:
     assert run_cli("login", extra_env=credentials).returncode == 0
 
     result = run_cli(
-        "students", "101", "--emails", "--json", extra_env=credentials
+        "participants", "101", "--emails", "--json", extra_env=credentials
     )
 
     assert result.returncode == 0, result.stderr
@@ -145,10 +145,10 @@ def test_students_can_include_email(run_cli, credentials) -> None:
     assert ana["email"] == "ana@uvigo.gal"
 
 
-def test_students_table_shows_role_labels(run_cli, credentials) -> None:
+def test_participants_table_shows_role_labels(run_cli, credentials) -> None:
     assert run_cli("login", extra_env=credentials).returncode == 0
 
-    result = run_cli("students", "101", extra_env=credentials)
+    result = run_cli("participants", "101", extra_env=credentials)
 
     assert result.returncode == 0, result.stderr
     assert "NOMBRE" in result.stdout
@@ -163,7 +163,7 @@ def test_permission_error_exit_code(run_cli, credentials, fake_moodle) -> None:
     assert run_cli("login", extra_env=credentials).returncode == 0
     fake_moodle.forbidden.add("core_enrol_get_enrolled_users")
 
-    result = run_cli("students", "101", extra_env=credentials)
+    result = run_cli("participants", "101", extra_env=credentials)
 
     assert result.returncode == 4
     assert "denegado" in result.stderr.lower()
@@ -204,10 +204,10 @@ def test_courses_raw_csv(run_cli, credentials) -> None:
     assert rows[2][3] == "false"
 
 
-def test_students_raw_csv(run_cli, credentials) -> None:
+def test_participants_raw_csv(run_cli, credentials) -> None:
     assert run_cli("login", extra_env=credentials).returncode == 0
 
-    result = run_cli("students", "101", "--format", "raw", extra_env=credentials)
+    result = run_cli("participants", "101", "--format", "raw", extra_env=credentials)
 
     assert result.returncode == 0, result.stderr
     rows = list(csv.reader(io.StringIO(result.stdout)))
