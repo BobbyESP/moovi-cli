@@ -77,6 +77,7 @@ PARTICIPANTS: list[dict[str, Any]] = [
         ],
         "lastcourseaccess": 1700000000,
         "email": "ana@uvigo.gal",
+        "idnumber": "297275",
     },
     {
         "id": 8,
@@ -94,6 +95,7 @@ PARTICIPANTS: list[dict[str, Any]] = [
         ],
         "lastcourseaccess": 1700000001,
         "email": "profesor@uvigo.gal",
+        "idnumber": "123456",
     },
     {
         "id": 9,
@@ -106,6 +108,7 @@ PARTICIPANTS: list[dict[str, Any]] = [
         ],
         "lastcourseaccess": 0,
         "email": "singrupo@uvigo.gal",
+        "idnumber": "654321",
     },
 ]
 

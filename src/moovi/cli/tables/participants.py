@@ -20,6 +20,7 @@ class ParticipantsTable(Table):
     def columns(self) -> Sequence[Column]:
         return [
             Column("id", "ID"),
+            Column("id_number", "ID NUMBER"),
             Column("first_name", "NOMBRE"),
             Column("last_name", "APELLIDOS"),
             Column("full_name", "NOMBRE COMPLETO", table=False, csv=False),
@@ -34,6 +35,7 @@ class ParticipantsTable(Table):
         return [
             (
                 participant.id,
+                participant.id_number,
                 participant.first_name,
                 participant.last_name,
                 participant.full_name,

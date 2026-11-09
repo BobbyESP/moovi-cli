@@ -108,6 +108,7 @@ def test_maps_participants_with_empty_role_name() -> None:
                 ],
                 "lastcourseaccess": 1700000000,
                 "email": "ana@uvigo.gal",
+                "idnumber": "297275",
             }
         ]
     )
@@ -125,6 +126,15 @@ def test_maps_participants_with_empty_role_name() -> None:
     ]
     assert participant.last_access is not None
     assert participant.email == "ana@uvigo.gal"
+    assert participant.id_number == "297275"
+
+
+def test_maps_participant_without_id_number() -> None:
+    [participant] = map_participants(
+        [{"id": 9, "firstname": "Sin", "lastname": "ID", "idnumber": ""}]
+    )
+
+    assert participant.id_number is None
 
 
 def test_maps_participants_with_role_name() -> None:

@@ -114,6 +114,7 @@ def _map_participant(item: Mapping[str, Any]) -> Participant:
     if not first_name and not last_name:
         first_name = str(item.get("fullname") or "").strip()
     email = item.get("email")
+    id_number = str(item.get("idnumber") or "").strip()
     return Participant(
         id=int(item.get("id", 0)),
         first_name=first_name,
@@ -122,6 +123,7 @@ def _map_participant(item: Mapping[str, Any]) -> Participant:
         roles=roles,
         last_access=timestamp(item.get("lastcourseaccess")),
         email=str(email) if email else None,
+        id_number=id_number or None,
     )
 
 

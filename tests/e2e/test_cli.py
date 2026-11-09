@@ -108,6 +108,7 @@ def test_participants_hide_email_by_default(run_cli, credentials) -> None:
     )
     assert ana["full_name"] == "Ana Alumna"
     assert ana["email"] is None
+    assert ana["id_number"] == "297275"
     assert ana["groups"] == [
         {"id": 146, "name": "PROII_1 (Laboratorio)"},
         {"id": 147, "name": "MODALIDAD_GLOBAL"},
@@ -151,6 +152,7 @@ def test_participants_table_shows_role_labels(run_cli, credentials) -> None:
     result = run_cli("participants", "101", extra_env=credentials)
 
     assert result.returncode == 0, result.stderr
+    assert "ID NUMBER" in result.stdout
     assert "NOMBRE" in result.stdout
     assert "APELLIDOS" in result.stdout
     assert "GRUPOS" in result.stdout
@@ -213,6 +215,7 @@ def test_participants_raw_csv(run_cli, credentials) -> None:
     rows = list(csv.reader(io.StringIO(result.stdout)))
     assert rows[0] == [
         "id",
+        "id_number",
         "first_name",
         "last_name",
         "groups",
@@ -220,10 +223,11 @@ def test_participants_raw_csv(run_cli, credentials) -> None:
         "last_access",
         "email",
     ]
-    ana = next(row for row in rows if row[1] == "Ana" and row[2] == "Alumna")
-    assert ana[3] == "PROII_1 (Laboratorio);MODALIDAD_GLOBAL"
-    assert ana[4] == "student"
-    assert ana[6] == ""
+    ana = next(row for row in rows if row[2] == "Ana" and row[3] == "Alumna")
+    assert ana[1] == "297275"
+    assert ana[4] == "PROII_1 (Laboratorio);MODALIDAD_GLOBAL"
+    assert ana[5] == "student"
+    assert ana[7] == ""
 
 
 def test_contents_raw_csv(run_cli, credentials) -> None:

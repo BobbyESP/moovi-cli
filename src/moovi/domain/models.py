@@ -64,6 +64,7 @@ class Participant:
     roles: tuple[Role, ...] = ()
     last_access: datetime | None = None
     email: str | None = None
+    id_number: str | None = None
 
     @property
     def full_name(self) -> str:

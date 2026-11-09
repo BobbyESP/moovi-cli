@@ -42,6 +42,7 @@ class FakeSession:
                 "Alumna",
                 roles=(Role(5, "student", ""),),
                 email="ana@uvigo.gal",
+                id_number="297275",
             )
         ]
 
@@ -72,6 +73,7 @@ def test_people_hides_email_by_default() -> None:
     [participant] = service.list_participants(101)
 
     assert participant.email is None
+    assert participant.id_number == "297275"
     assert participant.full_name == "Ana Alumna"
 
 

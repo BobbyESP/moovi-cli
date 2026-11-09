@@ -13,6 +13,7 @@ def participant() -> Participant:
         groups=(Group(146, "met_part"), Group(147, "Grupo;Raro")),
         roles=(Role(5, "student", ""), Role(3, "editingteacher", "")),
         email="ana@uvigo.gal",
+        id_number="297275",
     )
 
 
@@ -20,6 +21,7 @@ def test_columns_and_hidden_full_name() -> None:
     table = ParticipantsTable([participant()], include_email=False)
 
     columns = {column.key: column for column in table.columns}
+    assert columns["id_number"].header == "ID NUMBER"
     assert columns["full_name"].table is False
     assert columns["full_name"].csv is False
     assert columns["email"].table is False
@@ -30,8 +32,8 @@ def test_groups_and_roles_have_raw_text_and_csv() -> None:
     table = ParticipantsTable([participant()], include_email=True)
     row = table.rows[0]
 
-    groups = row[4]
-    roles = row[5]
+    groups = row[5]
+    roles = row[6]
     assert isinstance(groups, RichValue)
     assert groups.raw == participant().groups
     assert groups.text == "met_part; Grupo;Raro"
@@ -41,6 +43,13 @@ def test_groups_and_roles_have_raw_text_and_csv() -> None:
     assert roles.raw == participant().roles
     assert roles.text == "Alumno/a, Profesor/a"
     assert roles.csv_text == "student;editingteacher"
+
+
+def test_id_number_is_shown_next_to_moodle_id() -> None:
+    table = ParticipantsTable([participant()], include_email=False)
+
+    assert [column.key for column in table.columns[:2]] == ["id", "id_number"]
+    assert table.rows[0][1] == "297275"
 
 
 def test_email_column_is_visible_in_table_only_when_requested() -> None:

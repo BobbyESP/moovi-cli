@@ -163,7 +163,7 @@ En JSON, cada sección mantiene sus módulos como objetos, y el resumen incluye 
 
 ### `moovi participants COURSE_ID`
 
-Lista las personas matriculadas y sus roles. **Por defecto omite el correo electrónico.**
+Lista las personas matriculadas y sus roles. Muestra el `id` interno de Moodle y el `id_number` («ID number») que Moovi usa para el identificador de UVigo. **Por defecto omite el correo electrónico.**
 
 ```bash
 moovi participants 12345
@@ -172,11 +172,13 @@ moovi participants 12345 --json
 ```
 
 ```
-ID   NOMBRE    APELLIDOS    GRUPOS                                      ROLES        ÚLTIMO ACCESO
----  --------  -----------  ------------------------------------------  -----------  -------------------
-7    Ana       Alumna       PROII_1 (Laboratorio); MODALIDAD_GLOBAL     Alumno/a     2023-11-14 22:13 UTC
-8    Profesor  Uno          PROII_A (Teoría)                            Profesor/a   2023-11-14 22:13 UTC
+ID   ID NUMBER  NOMBRE    APELLIDOS    GRUPOS                                      ROLES        ÚLTIMO ACCESO
+---  ---------  --------  -----------  ------------------------------------------  -----------  -------------------
+7    297275     Ana       Alumna       PROII_1 (Laboratorio); MODALIDAD_GLOBAL     Alumno/a     2023-11-14 22:13 UTC
+8    123456     Profesor  Uno          PROII_A (Teoría)                            Profesor/a   2023-11-14 22:13 UTC
 ```
+
+`id` es el identificador interno de Moodle; `id_number` es el campo «ID number» de la ficha de usuario, que en Moovi contiene el identificador de UVigo. Son valores distintos y pueden no coincidir.
 
 Los grupos son los que el profesorado crea en *Participantes > Grupos*. Una persona puede estar en varios.
 
@@ -184,6 +186,8 @@ En JSON, los nombres van separados, `full_name` se calcula y los grupos son una 
 
 ```json
 {
+  "id": 7,
+  "id_number": "297275",
   "first_name": "Ana",
   "last_name": "Alumna",
   "full_name": "Ana Alumna",
@@ -298,7 +302,7 @@ moovi participants 1686 --format raw | grep -E ',(editingteacher|teacher)'
 moovi participants 1686 --format raw | grep ',PROII_1 (Laboratorio),'
 
 # Alumnado ordenado por apellidos
-moovi participants 1686 --format raw | tail -n +2 | sort -t, -k3
+moovi participants 1686 --format raw | tail -n +2 | sort -t, -k4
 
 # Tareas ordenadas por fecha de entrega
 moovi assignments 1686 --format raw | tail -n +2 | sort -t, -k4
@@ -320,12 +324,12 @@ Columnas de `--format raw`:
 | `whoami` / `login` | `user_id, username, full_name, site_name, release, functions_count` |
 | `courses` | `id, short_name, full_name, visible, start_date` |
 | `contents` | `section_id, section_name, summary_text, modules` |
-| `participants` | `id, first_name, last_name, groups, roles, last_access, email` |
+| `participants` | `id, id_number, first_name, last_name, groups, roles, last_access, email` |
 | `assignments` | `id, course_id, name, due_date, cutoff_date, max_grade` |
 | `announcements` | `id, created, author, subject, num_replies, pinned, locked` |
 | `announcement-content` | `id, discussion_id, subject, author, created, modified, message_text` |
 
-En `contents`, se genera una fila por sección y la columna `modules` une los módulos con `;` en formato `mod_name:nombre:1|0`. En `participants`, la columna `email` existe siempre y queda vacía salvo que uses `--emails`.
+En `contents`, se genera una fila por sección y la columna `modules` une los módulos con `;` en formato `mod_name:nombre:1|0`. En `participants`, la columna `email` existe siempre y queda vacía salvo que uses `--emails`; `id_number` también existe siempre y queda vacía si Moovi no la informa.
 
 La columna `groups` une los grupos con `;`. Si un nombre de grupo contuviera `;`, se sustituye por `#` para que no rompa el campo. Las comas, comillas y saltos de línea se entrecomillan según el estándar CSV.
 
@@ -392,7 +396,7 @@ Moovi no responde o está en mantenimiento. La CLI reintenta una vez los errores
 - `moovi login` pide la contraseña por terminal con `getpass`, sin eco y sin dejarla en el historial.
 - Un agente no debe pedirte la contraseña por chat: si no hay sesión, debe indicarte que ejecutes `moovi login`.
 - El cliente limita las funciones a una lista de solo lectura.
-- `participants` oculta los correos salvo que uses `--emails`.
+- `participants` oculta los correos salvo que uses `--emails`; el `id_number` de UVigo se muestra por defecto porque es el identificador que usa Moovi en su interfaz de participantes.
 - Los datos de alumnado que consultes pueden acabar en el contexto de un agente o en los registros de tu terminal. Pide solo lo necesario y no vuelques listados completos sin motivo.
 
 ## Desarrollo
