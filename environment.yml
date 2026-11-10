@@ -1,8 +1,0 @@
-name: moovi
-channels:
-  - conda-forge
-dependencies:
-  - python=3.12
-  - pip
-  - setuptools
-  - pytest

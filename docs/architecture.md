@@ -225,4 +225,4 @@ La conversión vive en `cli/text.py` (`html_to_text`, `flatten_text`). Las tabla
 | JSON conserva el HTML original | La tabla y el CSV usan texto legible; los campos `<campo>_text` son adicionales. |
 | Sin filtros de conveniencia | Se componen con `grep`/`sort`/`awk` sobre `--format raw` o `jq` sobre JSON. |
 | Moodle falso en tests | E2E deterministas y sin credenciales reales. |
-| `conda` | Entorno reproducible elegido por el usuario. |
+| `uv` + `uv.lock` | Entorno reproducible y rápido sin necesidad de binarios no Python. Ver [ADR 0001](decisions/0001-migrar-a-uv.md). |
