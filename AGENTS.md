@@ -3,7 +3,7 @@
 ## Si solo usas la CLI
 
 - Lee `README.md` y carga el skill `moovi` antes de improvisar.
-- Comprueba que `moovi` está disponible. Si tu shell no conserva la activación, usa `conda run -n moovi --no-capture-output moovi ...`.
+- Ejecuta la CLI con `uv run moovi ...` desde la raíz del repositorio. No requiere activar el entorno, así que funciona igual en shells nuevas. Si es la primera vez, `uv run` crea `.venv` solo; también puedes lanzar `uv sync` antes.
 - Ejecuta desde la raíz del repositorio para que se lea `.env`, o exporta las variables `MOOVI_*`.
 - No hagas scraping ni llames a la API a mano: usa `moovi` con `--json` o `--format raw`.
 - Si no hay sesión, no pidas la contraseña por chat: indica al usuario que ejecute `moovi login` en su terminal. No uses `--no-input` salvo que las credenciales ya estén en el entorno.
@@ -23,7 +23,7 @@
 
 ## Al terminar de tocar código
 
-- Ejecuta `pytest` (los tests `live` se saltan por defecto).
+- Ejecuta `uv run pytest` (los tests `live` se saltan por defecto).
 - Si cambia el comportamiento, comandos o salida: actualiza `README.md`.
 - Si cambian capas, puertos, flujo, errores o añades un comando: actualiza `docs/architecture.md`.
-- Si añades una dependencia: actualiza `environment.yml` y `pyproject.toml`.
+- Si añades una dependencia: usa `uv add <paquete>` (runtime) o `uv add --dev <paquete>` (desarrollo). Eso actualiza `pyproject.toml` y `uv.lock`; incluye ambos en el cambio. No edites `uv.lock` a mano.

@@ -8,35 +8,29 @@ Permite listar tus cursos, ver el contenido de una asignatura, consultar el alum
 
 ## Requisitos
 
-- [conda](https://docs.conda.io/) (Miniconda o Anaconda).
+- [uv](https://docs.astral.sh/uv/getting-started/installation/). Descarga el intérprete de Python 3.12 por su cuenta si no lo tienes; no hace falta instalar Python antes.
 - Una cuenta de Moovi con contraseña propia. Si tu cuenta solo admite SSO, consulta la sección [Token manual](#token-manual-sso).
 
 ## Instalación
 
+Desde la raíz del repositorio:
+
 ```bash
-conda env create -f environment.yml
-conda activate moovi
-pip install -e .
+uv sync
 ```
 
-> **Entorno activo:** `moovi` solo está disponible dentro del entorno conda.
-> Si trabajas en una shell persistente, usa `conda activate moovi`.
-> Si cada comando se ejecuta en una shell nueva (agentes, scripts, CI), usa
-> `conda run -n moovi --no-capture-output moovi ...`.
+Crea `.venv/` con Python 3.12 (fijado en `.python-version`), instala `moovi` en modo editable y las dependencias de desarrollo exactas que fija `uv.lock`.
 
 Comprueba que funciona:
 
 ```bash
-conda activate moovi
-moovi --version
-moovi --help
+uv run moovi --version
+uv run moovi --help
 ```
 
-O sin activar el entorno:
-
-```bash
-conda run -n moovi --no-capture-output moovi --version
-```
+> **No hace falta activar nada.** `uv run` usa el `.venv` del proyecto y lo sincroniza si hace falta, así que sirve igual en una shell persistente que en una nueva (agentes, scripts, CI). Si prefieres tener `moovi` directamente en el `PATH`, activa `.venv` (`source .venv/bin/activate` o `.venv\Scripts\activate` en Windows) o instálalo como herramienta global con `uv tool install --editable .`.
+>
+> ¿Vienes del entorno conda anterior? Consulta [`docs/decisions/0001-migrar-a-uv.md`](docs/decisions/0001-migrar-a-uv.md); puedes borrarlo con `conda env remove -n moovi`.
 
 ## Configuración
 
@@ -81,16 +75,15 @@ Con `MOOVI_TOKEN` no hace falta `MOOVI_PASSWORD`.
 ## Uso rápido
 
 ```bash
-conda activate moovi   # o usa `conda run -n moovi --no-capture-output moovi ...`
-moovi login
-moovi courses
-moovi contents 12345
-moovi participants 12345
-moovi assignments 12345
-moovi announcements 12345
+uv run moovi login
+uv run moovi courses
+uv run moovi contents 12345
+uv run moovi participants 12345
+uv run moovi assignments 12345
+uv run moovi announcements 12345
 
 # Para componer con herramientas Unix
-moovi courses --format raw | grep -i "matemáticas"
+uv run moovi courses --format raw | grep -i "matemáticas"
 ```
 
 ## Comandos
@@ -352,13 +345,13 @@ Con `--format json` (o `--json`), los errores se escriben en `stderr` como:
 
 **`moovi: command not found`**
 
-El entorno no está activo. Usa `conda activate moovi` o, desde una shell nueva:
+`moovi` solo está en el `PATH` con `.venv` activado. Sin activarlo, ejecútalo desde la raíz del repositorio con:
 
 ```bash
-conda run -n moovi --no-capture-output moovi courses --json
+uv run moovi courses --json
 ```
 
-Si sigue fallando, entra en el entorno y ejecuta `pip install -e .`.
+Si sigue fallando, recrea el entorno con `uv sync --reinstall`.
 
 **`Credenciales incorrectas`**
 
@@ -402,8 +395,19 @@ Moovi no responde o está en mantenimiento. La CLI reintenta una vez los errores
 ## Desarrollo
 
 ```bash
-pytest                # unitarios, integración y e2e con Moodle falso
-pytest -m live        # contra Moovi real (requiere .env y MOOVI_E2E=1)
+uv run pytest            # unitarios, integración y e2e con Moodle falso
+uv run pytest -m live    # contra Moovi real (requiere .env y MOOVI_E2E=1)
 ```
+
+Gestión de dependencias:
+
+```bash
+uv add <paquete>          # dependencia en runtime (hoy no hay ninguna: ver docs/architecture.md)
+uv add --dev <paquete>    # dependencia de desarrollo
+uv lock --upgrade         # actualizar versiones dentro de los rangos de pyproject.toml
+uv sync --locked          # instalar exactamente lo de uv.lock y fallar si está desfasado (CI)
+```
+
+`uv.lock` se versiona: garantiza que todo el mundo, y la CI, usa las mismas versiones.
 
 Antes de tocar código, lee [`docs/architecture.md`](docs/architecture.md) y [`AGENTS.md`](AGENTS.md).
