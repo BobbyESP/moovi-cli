@@ -10,9 +10,9 @@ CLI de solo lectura sobre la API oficial de Moovi. No usa scraping y no modifica
 ## Requisitos
 
 - Ejecuta la CLI con `uv run moovi ...` desde la raíz del repositorio. No hace falta activar ningún entorno, así que funciona igual en una shell nueva. Si `moovi` ya está en el `PATH` (entorno `.venv` activado o `uv tool install`), puedes llamarlo directamente.
-- Debe haber un token válido en `~/.cache/moovi/token.json` (se crea con `moovi login`) o `MOOVI_TOKEN` en el entorno. `.env` solo necesita `MOOVI_URL` y, opcionalmente, `MOOVI_USER`.
+- Debe haber un token válido en `~/.cache/moovi/token.json` (se crea con `uv run moovi login`) o `MOOVI_TOKEN` en el entorno. `.env` solo necesita `MOOVI_URL` y, opcionalmente, `MOOVI_USER`.
 - Ejecuta desde la raíz del repositorio para que se lea `.env`, o exporta las variables `MOOVI_*`.
-- **Nunca pidas la contraseña por chat ni imprimas `.env` o el token.** Si no hay sesión, pide al usuario que ejecute `moovi login` en su terminal. No uses `--no-input` salvo que las credenciales ya estén en el entorno.
+- **Nunca pidas la contraseña por chat ni imprimas `.env` o el token.** Si no hay sesión, pide al usuario que ejecute `uv run moovi login` en su terminal, desde la raíz del repositorio. No uses `--no-input` salvo que las credenciales ya estén en el entorno.
 
 ## Flujo
 
@@ -22,7 +22,7 @@ CLI de solo lectura sobre la API oficial de Moovi. No usa scraping y no modifica
    moovi whoami --json
    ```
 
-   Si falla con “No hay sesión válida”, pide al usuario que ejecute `moovi login` en su terminal. No le pidas la contraseña.
+   Si falla con “No hay sesión válida”, pide al usuario que ejecute `uv run moovi login` en su terminal, desde la raíz del repositorio. No le pidas la contraseña.
 
 2. Localiza el curso por su shortname o nombre:
 

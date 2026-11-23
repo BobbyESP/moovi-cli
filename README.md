@@ -362,7 +362,7 @@ Revisa el usuario y la contraseña que introduces en `moovi login`. Si tu cuenta
 No hay token cacheado y la CLI no tiene credenciales para renovarlo:
 
 ```bash
-moovi login
+uv run moovi login
 ```
 
 **`El token de Moovi no es válido o ha caducado`**
@@ -370,7 +370,7 @@ moovi login
 Fuerza un login nuevo:
 
 ```bash
-moovi login --force
+uv run moovi login --force
 ```
 
 Si no tienes contraseña, renueva `MOOVI_TOKEN`.
@@ -405,9 +405,9 @@ Gestión de dependencias:
 uv add <paquete>          # dependencia en runtime (hoy no hay ninguna: ver docs/architecture.md)
 uv add --dev <paquete>    # dependencia de desarrollo
 uv lock --upgrade         # actualizar versiones dentro de los rangos de pyproject.toml
-uv sync --locked          # instalar exactamente lo de uv.lock y fallar si está desfasado (CI)
+uv sync --locked          # instalar exactamente lo de uv.lock y fallar si está desfasado
 ```
 
-`uv.lock` se versiona: garantiza que todo el mundo, y la CI, usa las mismas versiones.
+`uv.lock` se versiona: garantiza que todos los entornos usan las mismas versiones.
 
 Antes de tocar código, lee [`docs/architecture.md`](docs/architecture.md) y [`AGENTS.md`](AGENTS.md).

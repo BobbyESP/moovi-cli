@@ -50,7 +50,7 @@ Adoptar [uv](https://docs.astral.sh/uv/) como único gestor de entorno, dependen
 |---|---|
 | **Mantener conda** | Conserva los cinco problemas anteriores; su ventaja principal no se usa. |
 | **`python -m venv` + `pip`** | Es el mínimo universal, pero no tiene lockfile ni gestiona el intérprete; reproduciría el problema 1. |
-| **Poetry / PDM / Hatch** | Resuelven el lockfile, pero añaden su propio flujo y herramientas que este proyecto no necesita y, a diferencia de uv, no gestionan el intérprete de Python. uv cubre lo mismo con menos piezas. |
+| **Poetry / PDM / Hatch** | Son alternativas válidas para gestionar el proyecto, pero añaden un flujo propio que aquí no aporta ventajas. uv cubre lo que necesitamos (entorno, lockfile e intérprete) con una sola herramienta. |
 | **pip-tools** | Genera un `requirements.txt` bloqueado, pero sigue necesitando venv e intérprete aparte. |
 
 ## Consecuencias
