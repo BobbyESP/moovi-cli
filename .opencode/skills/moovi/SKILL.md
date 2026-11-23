@@ -19,7 +19,7 @@ CLI de solo lectura sobre la API oficial de Moovi. No usa scraping y no modifica
 1. Comprueba la sesión:
 
    ```bash
-   moovi whoami --json
+   uv run moovi whoami --json
    ```
 
    Si falla con “No hay sesión válida”, pide al usuario que ejecute `uv run moovi login` en su terminal, desde la raíz del repositorio. No le pidas la contraseña.
@@ -27,17 +27,17 @@ CLI de solo lectura sobre la API oficial de Moovi. No usa scraping y no modifica
 2. Localiza el curso por su shortname o nombre:
 
    ```bash
-   moovi courses --json
+   uv run moovi courses --json
    ```
 
 3. Consulta lo que pida el usuario:
 
    ```bash
-   moovi contents <course_id> --json
-   moovi participants <course_id> --json   # incluye groups y roles
-   moovi assignments <course_id> --json
-   moovi announcements <course_id> --json   # foro de noticias de Moovi
-   moovi announcement-content <announcement_id> --json
+   uv run moovi contents <course_id> --json
+   uv run moovi participants <course_id> --json   # incluye groups y roles
+   uv run moovi assignments <course_id> --json
+   uv run moovi announcements <course_id> --json   # foro de noticias de Moovi
+   uv run moovi announcement-content <announcement_id> --json
    ```
 
 4. Resume el resultado. No vuelques listados completos si basta con un resumen.

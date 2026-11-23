@@ -227,3 +227,4 @@ La conversión vive en `cli/text.py` (`html_to_text`, `flatten_text`). Las tabla
 | Moodle falso en tests | E2E deterministas y sin credenciales reales. |
 | `uv` + `uv.lock` | Entorno reproducible y rápido sin necesidad de binarios no Python. Ver [ADR 0001](decisions/0001-migrar-a-uv.md). |
 | Versión en `moovi.__version__` | Única fuente de verdad. `pyproject.toml` la lee como campo dinámico, así la CLI y los metadatos no se desincronizan. |
+| Salida redirigida en UTF-8 | `cli/main.py` la fuerza en pipes y ficheros para que JSON y CSV no dependan de la codificación local de Windows. |
