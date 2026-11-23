@@ -11,6 +11,7 @@ from moovi.logic.services import (
     AssignmentService,
     AuthService,
     CatalogService,
+    FileService,
     PeopleService,
 )
 from moovi.logic.session import MoodleSession
@@ -24,6 +25,7 @@ class Services:
     people: PeopleService
     assignments: AssignmentService
     announcements: AnnouncementService
+    files: FileService
 
 
 def build_services(settings: Settings) -> Services:
@@ -43,4 +45,5 @@ def build_services(settings: Settings) -> Services:
         people=PeopleService(session),
         assignments=AssignmentService(session),
         announcements=AnnouncementService(session),
+        files=FileService(session),
     )

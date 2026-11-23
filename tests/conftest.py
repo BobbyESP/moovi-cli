@@ -196,6 +196,8 @@ class FakeMoodle:
         self.forums: list[dict[str, Any]] = list(FORUMS)
         self.announcements: dict[str, Any] = ANNOUNCEMENTS
         self.discussion_post: dict[str, Any] = DISCUSSION_POST
+        self.contents: list[dict[str, Any]] = CONTENTS
+        self.files: dict[str, bytes] = {}
         self.requests: list[tuple[str, dict[str, str]]] = []
         self._server: ThreadingHTTPServer | None = None
         self._thread: threading.Thread | None = None
@@ -222,6 +224,8 @@ class FakeMoodle:
                     outer._login(self, params)
                 elif self.path == "/webservice/rest/server.php":
                     outer._webservice(self, params)
+                elif self.path.startswith("/webservice/pluginfile.php/"):
+                    outer._file(self, params)
                 else:
                     outer._send(self, 404, {"error": "not found"})
 
@@ -317,7 +321,7 @@ class FakeMoodle:
         responses: dict[str, object] = {
             "core_webservice_get_site_info": SITE_INFO,
             "core_enrol_get_users_courses": COURSES,
-            "core_course_get_contents": CONTENTS,
+            "core_course_get_contents": self.contents,
             "core_enrol_get_enrolled_users": PARTICIPANTS,
             "mod_assign_get_assignments": ASSIGNMENTS,
             "mod_forum_get_forums_by_courses": self.forums,
@@ -336,6 +340,35 @@ class FakeMoodle:
             )
             return
         self._send(handler, 200, responses[function])
+
+    def file_url(self, name: str) -> str:
+        return f"{self.url}/webservice/pluginfile.php/1/mod_resource/content/1/{name}"
+
+    def _file(
+        self, handler: BaseHTTPRequestHandler, params: dict[str, str]
+    ) -> None:
+        if params.get("token") != self.valid_token or self.invalid_token_once:
+            self.invalid_token_once = False
+            self._send(
+                handler,
+                200,
+                {
+                    "exception": "moodle_exception",
+                    "errorcode": "invalidtoken",
+                    "message": "Invalid token",
+                },
+            )
+            return
+        name = handler.path.split("?", 1)[0].rsplit("/", 1)[-1]
+        if name not in self.files:
+            self._send(handler, 404, {"error": "not found"})
+            return
+        body = self.files[name]
+        handler.send_response(200)
+        handler.send_header("Content-Type", "application/octet-stream")
+        handler.send_header("Content-Length", str(len(body)))
+        handler.end_headers()
+        handler.wfile.write(body)
 
     @staticmethod
     def _send(

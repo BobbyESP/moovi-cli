@@ -21,7 +21,7 @@ from moovi.domain.models import (
     SiteInfo,
 )
 from moovi.domain.values import Token
-from moovi.logic.ports import MoodleGateway, TokenStore
+from moovi.logic.ports import ByteStream, MoodleGateway, TokenStore
 
 T = TypeVar("T")
 
@@ -148,3 +148,6 @@ class MoodleSession:
         return self._call(
             lambda token: self._gateway.discussion_post(token, post_id)
         )
+
+    def open_file(self, url: str) -> ByteStream:
+        return self._call(lambda token: self._gateway.open_file(token, url))

@@ -16,6 +16,7 @@ from moovi.domain.models import (
     Group,
     Module,
     Participant,
+    RemoteFile,
     Role,
     Section,
     SiteInfo,
@@ -91,6 +92,37 @@ def _map_module(item: Mapping[str, Any]) -> Module:
         mod_name=str(item.get("modname", "")),
         visible=bool(item.get("visible", 1)),
         url=str(url) if url else None,
+        files=tuple(
+            _map_remote_file(content)
+            for content in item.get("contents") or ()
+            if _is_remote_file(content)
+        ),
+    )
+
+
+def _is_remote_file(content: object) -> bool:
+    # Moodle también lista enlaces externos y contenido embebido en `contents`.
+    return (
+        isinstance(content, Mapping)
+        and content.get("type") == "file"
+        and bool(content.get("fileurl"))
+        and bool(content.get("filename"))
+    )
+
+
+def _map_remote_file(item: Mapping[str, Any]) -> RemoteFile:
+    try:
+        size = max(int(item.get("filesize") or 0), 0)
+    except (TypeError, ValueError):
+        size = 0
+    mime_type = item.get("mimetype")
+    return RemoteFile(
+        name=str(item["filename"]),
+        url=str(item["fileurl"]),
+        folder=str(item.get("filepath") or "").strip("/"),
+        size=size,
+        modified=timestamp(item.get("timemodified")),
+        mime_type=str(mime_type) if mime_type else None,
     )
 
 

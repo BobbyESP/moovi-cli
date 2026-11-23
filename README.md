@@ -2,7 +2,7 @@
 
 Herramienta de línea de comandos para consultar **Moovi**, la plataforma Moodle de la Universidade de Vigo, en **modo de solo lectura** y a través de su API oficial de servicios web.
 
-Permite listar tus cursos, ver el contenido de una asignatura, consultar el alumnado matriculado, revisar las tareas y leer el foro de noticias. No hace *scraping* y no modifica nada en Moovi.
+Permite listar tus cursos, ver el contenido de una asignatura, descargar sus archivos y carpetas, consultar el alumnado matriculado, revisar las tareas y leer el foro de noticias. No hace *scraping* y no modifica nada en Moovi.
 
 > Documentación técnica: [`docs/architecture.md`](docs/architecture.md).
 
@@ -78,6 +78,8 @@ Con `MOOVI_TOKEN` no hace falta `MOOVI_PASSWORD`.
 uv run moovi login
 uv run moovi courses
 uv run moovi contents 12345
+uv run moovi files 12345
+uv run moovi download 12345 -o apuntes
 uv run moovi participants 12345
 uv run moovi assignments 12345
 uv run moovi announcements 12345
@@ -154,7 +156,59 @@ ID  SECCIÓN  RESUMEN       MÓDULOS
                            [resource] Apuntes (oculta)
 ```
 
-En JSON, cada sección mantiene sus módulos como objetos, y el resumen incluye `summary` (HTML) y `summary_text` (texto).
+En JSON, cada sección mantiene sus módulos como objetos (con sus `files`), y el resumen incluye `summary` (HTML) y `summary_text` (texto).
+
+### `moovi files COURSE_ID [MODULE_ID ...]`
+
+Lista los archivos descargables de los módulos de tipo recurso y carpeta, con la ruta local que usará `download`.
+
+```bash
+moovi files 12345
+moovi files 12345 678 679   # solo esos módulos
+moovi files 12345 --json
+```
+
+```
+MÓDULO  RUTA                            TAMAÑO   MODIFICADO
+------  ------------------------------  -------  --------------------
+678     Tema 1/Apuntes.pdf              1.2 MB   2026-02-01 10:30 UTC
+679     Tema 1/Prácticas/p1/enunciado.pdf  88.4 KB  2026-02-03 09:00 UTC
+```
+
+### `moovi download COURSE_ID [MODULE_ID ...]`
+
+Descarga todo el curso o solo los módulos indicados. Una carpeta de Moovi se descarga completa y conserva sus subcarpetas.
+
+```bash
+moovi download 12345                  # en ./moovi-12345
+moovi download 12345 -o apuntes       # en ./apuntes
+moovi download 12345 678 679 -o apuntes
+moovi download 12345 -o apuntes --overwrite
+```
+
+Se puede repetir para sincronizar:
+
+| Estado | JSON/CSV | Significado |
+|---|---|---|
+| descargado | `downloaded` | Se ha guardado el archivo. |
+| al día | `skipped` | El archivo local coincide en tamaño y fecha. |
+| conflicto | `conflict` | El archivo local es distinto. **No se toca** salvo con `--overwrite`. |
+| error | `failed` | No se pudo descargar; el resto continúa. |
+
+Si algún archivo termina en `conflict` o `failed`, el comando sale con código `1`. Las descargas son atómicas: un corte nunca deja un archivo a medias ni estropea el anterior.
+
+Desde código, la misma operación se compone en dos pasos:
+
+```python
+from moovi.infra.file_store import LocalFileStore
+
+files = services.files.list_files(12345, module_ids=[678])
+results = services.files.download(files, into=LocalFileStore("apuntes"))
+
+# O con progreso, resultado a resultado:
+for result in services.files.iter_download(files, LocalFileStore("apuntes")):
+    print(result.status, result.file.path)
+```
 
 ### `moovi participants COURSE_ID`
 
@@ -319,6 +373,8 @@ Columnas de `--format raw`:
 | `whoami` / `login` | `user_id, username, full_name, site_name, release, functions_count` |
 | `courses` | `id, short_name, full_name, visible, start_date` |
 | `contents` | `section_id, section_name, summary_text, modules` |
+| `files` | `module_id, path, size, modified, mime_type, url` |
+| `download` | `status, module_id, path, size, error` |
 | `participants` | `id, id_number, first_name, last_name, groups, roles, last_access, email` |
 | `assignments` | `id, course_id, name, due_date, cutoff_date, max_grade` |
 | `announcements` | `id, created, author, subject, num_replies, pinned, locked` |
@@ -333,6 +389,7 @@ La columna `groups` une los grupos con `;`. Si un nombre de grupo contuviera `;`
 | Código | Significado |
 |---|---|
 | `0` | Correcto. |
+| `1` | Descarga parcial: algún archivo quedó en `conflict` o `failed`. |
 | `2` | Error de configuración o autenticación (`.env`, credenciales, token). |
 | `3` | Error de la API o de red. |
 | `4` | Moovi ha denegado el acceso (permisos insuficientes). |
@@ -391,6 +448,7 @@ Moovi no responde o está en mantenimiento. La CLI reintenta una vez los errores
 - `moovi login` pide la contraseña por terminal con `getpass`, sin eco y sin dejarla en el historial.
 - Un agente no debe pedirte la contraseña por chat: si no hay sesión, debe indicarte que ejecutes `moovi login`.
 - El cliente limita las funciones a una lista de solo lectura.
+- Al descargar, el token solo se envía a la URL de Moovi configurada y nunca en la URL. Los nombres remotos se sanean para que no puedan escribir fuera del destino.
 - `participants` oculta los correos salvo que uses `--emails`; el `id_number` de UVigo se muestra por defecto porque es el identificador que usa Moovi en su interfaz de participantes.
 - Los datos de alumnado que consultes pueden acabar en el contexto de un agente o en los registros de tu terminal. Pide solo lo necesario y no vuelques listados completos sin motivo.
 

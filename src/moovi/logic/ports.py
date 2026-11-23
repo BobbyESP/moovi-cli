@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Protocol
+from datetime import datetime
+from types import TracebackType
+from typing import Protocol, Self
 
 from moovi.domain.models import (
     Announcement,
@@ -14,8 +16,24 @@ from moovi.domain.models import (
     Participant,
     Section,
     SiteInfo,
+    StoredFile,
 )
 from moovi.domain.values import Token
+
+
+class ByteStream(Protocol):
+    """Flujo binario de lectura que se usa con ``with``."""
+
+    def read(self, size: int = -1, /) -> bytes: ...
+
+    def __enter__(self) -> Self: ...
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None: ...
 
 
 class MoodleGateway(Protocol):
@@ -50,6 +68,35 @@ class MoodleGateway(Protocol):
     def discussion_post(
         self, token: Token, post_id: int
     ) -> AnnouncementContent: ...
+
+    def open_file(self, token: Token, url: str) -> ByteStream:
+        """Abre un fichero de Moodle.
+
+        Los errores de autenticación se lanzan aquí, no al leer, para que la
+        sesión pueda renovar el token y reintentar.
+        """
+        ...
+
+
+class FileStore(Protocol):
+    """Destino de las descargas. Las rutas son relativas y usan ``/``."""
+
+    def stat(self, path: str) -> StoredFile | None: ...
+
+    def save(
+        self,
+        path: str,
+        source: ByteStream,
+        *,
+        size: int | None = None,
+        modified: datetime | None = None,
+    ) -> int:
+        """Guarda ``source`` de forma atómica y devuelve los bytes escritos.
+
+        Si ``size`` no coincide, lanza ``IncompleteDownloadError`` y conserva
+        el fichero anterior.
+        """
+        ...
 
 
 class TokenStore(Protocol):

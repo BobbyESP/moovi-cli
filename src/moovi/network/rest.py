@@ -6,12 +6,15 @@ configuración ni la caché de tokens: recibe el token en cada llamada.
 
 from __future__ import annotations
 
+import io
 import json
 import time
 from collections.abc import Callable, Mapping, Sequence
-from typing import Any
+from http.client import HTTPException
+from types import TracebackType
+from typing import Any, Self
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlsplit
 from urllib.request import Request, urlopen
 
 from moovi.domain.errors import (
@@ -45,6 +48,8 @@ from moovi.network.mappers import (
 from moovi.network.params import flatten_params
 
 _RETRY_DELAY_SECONDS = 0.2
+_FILE_ENDPOINT = "/webservice/pluginfile.php/"
+_FILE_BUFFER_BYTES = 64 * 1024
 
 # Único punto donde se declara qué se puede llamar. Si añades una función,
 # añádela aquí y crea su comando correspondiente.
@@ -124,11 +129,14 @@ class MoodleRestClient(MoodleGateway):
             ) from exc
 
     def _read(self, request: Request) -> str:
+        with self._open(request) as response:
+            return response.read().decode("utf-8")
+
+    def _open(self, request: Request) -> Any:
         last_error: Exception | None = None
         for attempt in range(2):
             try:
-                with self._opener(request, timeout=self._timeout) as response:
-                    return response.read().decode("utf-8")
+                return self._opener(request, timeout=self._timeout)
             except HTTPError as exc:
                 last_error = exc
                 if exc.code >= 500 and attempt == 0:
@@ -201,6 +209,75 @@ class MoodleRestClient(MoodleGateway):
             postid=post_id,
         )
         return map_announcement_content(data)
+
+    def open_file(self, token: Token, url: str) -> _RemoteStream:
+        self._require_file_url(url)
+        # El token va en el cuerpo: así no aparece en URLs, logs ni redirecciones.
+        request = Request(
+            url,
+            data=urlencode({"token": token.value}).encode("utf-8"),
+            method="POST",
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+        )
+        response = self._open(request)
+        reader = io.BufferedReader(response, buffer_size=_FILE_BUFFER_BYTES)
+        try:
+            _raise_for_file_error(reader, response.headers.get("Content-Type", ""))
+        except BaseException:
+            reader.close()
+            raise
+        return _RemoteStream(reader)
+
+    def _require_file_url(self, url: str) -> None:
+        """Impide enviar el token a un destino que no sea este Moodle."""
+
+        base = urlsplit(self._base_url)
+        target = urlsplit(url)
+        if (
+            target.scheme != base.scheme
+            or target.netloc != base.netloc
+            or not target.path.startswith(base.path + _FILE_ENDPOINT)
+        ):
+            raise ApiError(
+                "invalidfileurl", "La URL del archivo no pertenece a Moovi."
+            )
+
+
+class _RemoteStream:
+    """Flujo de un fichero remoto que traduce los fallos a errores de dominio."""
+
+    def __init__(self, reader: io.BufferedReader) -> None:
+        self._reader = reader
+
+    def read(self, size: int = -1, /) -> bytes:
+        try:
+            return self._reader.read(size)
+        except (HTTPException, OSError) as exc:
+            raise NetworkError(f"Se interrumpió la descarga: {exc}") from exc
+
+    def __enter__(self) -> Self:
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
+        self._reader.close()
+
+
+def _raise_for_file_error(reader: io.BufferedReader, content_type: str) -> None:
+    """Moodle puede responder HTTP 200 con un error JSON en lugar del fichero."""
+
+    if "json" not in content_type.lower():
+        return
+    try:
+        payload = json.loads(reader.peek(_FILE_BUFFER_BYTES))
+    except ValueError:
+        return
+    if isinstance(payload, Mapping):
+        raise_for_moodle_error(payload)
 
 
 def _as_mapping(data: object) -> Mapping[str, Any]:

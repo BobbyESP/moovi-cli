@@ -38,6 +38,19 @@ uv run moovi contents 12345
 
 Cada sección trae `name`, `summary` y `modules`; cada módulo trae `mod_name`, `name`, `visible` y `url`.
 
+## Descargar archivos y carpetas
+
+```bash
+# Ver qué hay y cuánto ocupa (bytes)
+uv run moovi files 12345 --json | jq '{archivos: length, bytes: (map(.size) | add)}'
+
+# Descargar un módulo concreto y revisar lo que no se completó
+uv run moovi download 12345 678 -o apuntes --json \
+  | jq '.[] | select(.status == "conflict" or .status == "failed")'
+```
+
+Código de salida `1`: descarga parcial. Mira `status` y `error` de cada archivo.
+
 ## Listar alumnado sin correos
 
 ```bash

@@ -37,6 +37,8 @@ Moovi es Moodle 4.5 y expone los servicios web oficiales. No se usa scraping.
 
 Todas están en la allowlist de `network/rest.py`. La CLI no expone un `call` genérico.
 
+Los archivos se leen de `fileurl` (`/webservice/pluginfile.php/...`), que viene en `contents` de `core_course_get_contents`. El token se envía como `token` en el cuerpo del POST.
+
 ## Añadir una función
 
 1. Añádela a `READ_ONLY_FUNCTIONS` en `src/moovi/network/rest.py`.
