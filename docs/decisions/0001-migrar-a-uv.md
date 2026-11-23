@@ -84,7 +84,7 @@ Adoptar [uv](https://docs.astral.sh/uv/) como único gestor de entorno, dependen
 ## Verificación
 
 - `uv sync` crea `.venv` con Python 3.12 e instala el proyecto en modo editable.
-- `uv run moovi --version` devuelve `moovi 0.1.0`.
+- `uv run moovi --version` devuelve la versión definida en `src/moovi/__init__.py`.
 - `uv run pytest`: 155 tests pasan y 2 se saltan (`live`). Fallan 2 tests que **ya fallaban antes de la migración** y no están relacionados con ella: comprueban que el fichero del token tiene permisos `0600`, y en Windows (NTFS) el sistema de ficheros no expone ese modo (devuelve `0o666`). Conviene tratarlos aparte, por ejemplo saltándolos en `win32`.
 - Con la salida redirigida, la CLI escribe UTF-8 también en Windows. Los tests e2e lo comprueban sin `PYTHONUTF8` ni `PYTHONIOENCODING`.
 
