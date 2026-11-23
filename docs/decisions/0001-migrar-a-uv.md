@@ -1,7 +1,7 @@
 # ADR 0001 — Migrar la gestión del entorno de conda a uv
 
 - **Estado:** Aceptada e implementada.
-- **Ámbito:** entorno de desarrollo y de ejecución. No cambia el código de `src/`, la interfaz de la CLI ni la arquitectura por capas.
+- **Ámbito:** entorno de desarrollo y de ejecución. No cambia los comandos de la CLI ni la arquitectura por capas. El único cambio en `src/` hace que la salida redirigida use UTF-8 también en Windows.
 
 ## Contexto
 
@@ -74,7 +74,7 @@ Adoptar [uv](https://docs.astral.sh/uv/) como único gestor de entorno, dependen
 1. **Declarar las dependencias de desarrollo en `pyproject.toml`.** Se añadió `[dependency-groups] dev = ["pytest>=8"]`. *Por qué:* la información que estaba en `environment.yml` pasa al único fichero que describe el proyecto. Se mantiene `setuptools` como backend de build para limitar el alcance del cambio.
 2. **Fijar el intérprete con `.python-version`.** *Por qué:* uv elige y descarga Python 3.12 sin pasos manuales, coherente con `requires-python = ">=3.12"`.
 3. **Generar `uv.lock` con `uv lock`.** *Por qué:* es lo que aporta reproducibilidad; se versiona.
-4. **Validar antes de documentar.** `uv sync`, `uv run moovi --version` y `uv run pytest`. *Por qué:* confirmar que el port funciona antes de reescribir las instrucciones. Los tests lanzan la CLI con `sys.executable -m moovi`, así que no dependen del gestor de entornos y no hizo falta tocar código ni tests.
+4. **Validar antes de documentar.** `uv sync`, `uv run moovi --version` y `uv run pytest`. *Por qué:* confirmar que el port funciona antes de reescribir las instrucciones. Los tests lanzan la CLI con `sys.executable -m moovi`, así que no dependen del gestor de entornos.
 5. **Eliminar `environment.yml` y la entrada `.conda/` de `.gitignore`.** *Por qué:* dejar dos fuentes de verdad invitaría a que divergieran.
 6. **Actualizar la documentación**, sin duplicarla (el README es el manual de usuario; `docs/architecture.md`, la referencia técnica; este ADR, el porqué):
    - `README.md`: requisitos, instalación, uso rápido, problemas frecuentes y desarrollo.
@@ -86,10 +86,11 @@ Adoptar [uv](https://docs.astral.sh/uv/) como único gestor de entorno, dependen
 - `uv sync` crea `.venv` con Python 3.12 e instala el proyecto en modo editable.
 - `uv run moovi --version` devuelve `moovi 0.1.0`.
 - `uv run pytest`: 155 tests pasan y 2 se saltan (`live`). Fallan 2 tests que **ya fallaban antes de la migración** y no están relacionados con ella: comprueban que el fichero del token tiene permisos `0600`, y en Windows (NTFS) el sistema de ficheros no expone ese modo (devuelve `0o666`). Conviene tratarlos aparte, por ejemplo saltándolos en `win32`.
+- Con la salida redirigida, la CLI escribe UTF-8 también en Windows. Los tests e2e lo comprueban sin `PYTHONUTF8` ni `PYTHONIOENCODING`.
 
 ## Reversión
 
-Basta con restaurar `environment.yml` y las líneas de documentación desde el historial de git. El código fuente no ha cambiado, así que no hay migración de datos: el token vive en `~/.cache/moovi/token.json`, fuera del entorno.
+Basta con restaurar `environment.yml` y las líneas de documentación desde el historial de git. El único cambio de código afecta a la codificación de la salida, así que no hay migración de datos: el token vive en `~/.cache/moovi/token.json`, fuera del entorno.
 
 ## Seguimientos opcionales (fuera de este cambio)
 

@@ -86,6 +86,8 @@ uv run moovi announcements 12345
 uv run moovi courses --format raw | grep -i "matemáticas"
 ```
 
+Cuando la salida va a un pipe o a un fichero, `moovi` escribe siempre en UTF-8, también en Windows.
+
 ## Comandos
 
 ### `moovi login`

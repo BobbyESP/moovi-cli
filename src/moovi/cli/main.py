@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import io
 import os
 import sys
 from collections.abc import Sequence
@@ -83,7 +84,15 @@ def _resolve_format(
     return chosen or "table"
 
 
+def _use_utf8_when_redirected() -> None:
+    """Evita que Windows codifique en cp1252 la salida hacia pipes y ficheros."""
+    for stream in (sys.stdout, sys.stderr):
+        if isinstance(stream, io.TextIOWrapper) and not stream.isatty():
+            stream.reconfigure(encoding="utf-8", errors=stream.errors)
+
+
 def main(argv: Sequence[str] | None = None) -> int:
+    _use_utf8_when_redirected()
     parser = build_parser()
     args = parser.parse_args(argv)
     output_format = _resolve_format(args, parser)

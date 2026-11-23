@@ -33,6 +33,8 @@ def run_cli(fake_moodle, tmp_path: Path) -> Callable[..., subprocess.CompletedPr
         key: value
         for key, value in os.environ.items()
         if not key.startswith("MOOVI_")
+        # Sin estos ajustes, los tests comprueban la codificación real de la CLI.
+        and key not in {"PYTHONIOENCODING", "PYTHONUTF8"}
     }
     base_env.update(
         {
@@ -54,7 +56,7 @@ def run_cli(fake_moodle, tmp_path: Path) -> Callable[..., subprocess.CompletedPr
             cwd=str(cwd or tmp_path),
             env=env,
             capture_output=True,
-            text=True,
+            encoding="utf-8",
             timeout=30,
         )
 

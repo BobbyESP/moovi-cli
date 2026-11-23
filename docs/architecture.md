@@ -226,3 +226,4 @@ La conversión vive en `cli/text.py` (`html_to_text`, `flatten_text`). Las tabla
 | Sin filtros de conveniencia | Se componen con `grep`/`sort`/`awk` sobre `--format raw` o `jq` sobre JSON. |
 | Moodle falso en tests | E2E deterministas y sin credenciales reales. |
 | `uv` + `uv.lock` | Entorno reproducible y rápido sin necesidad de binarios no Python. Ver [ADR 0001](decisions/0001-migrar-a-uv.md). |
+| Salida redirigida en UTF-8 | `cli/main.py` la fuerza en pipes y ficheros para que JSON y CSV no dependan de la codificación local de Windows. |
