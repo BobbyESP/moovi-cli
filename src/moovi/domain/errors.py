@@ -53,6 +53,31 @@ class AmbiguousForumError(MooviError):
         )
 
 
+class UnknownModuleError(MooviError):
+    """Los módulos pedidos no existen o no tienen archivos descargables."""
+
+    def __init__(self, course_id: int, module_ids: object) -> None:
+        self.course_id = course_id
+        self.module_ids = tuple(sorted(module_ids))  # type: ignore[call-overload]
+        listed = ", ".join(str(module_id) for module_id in self.module_ids)
+        super().__init__(
+            f"Sin archivos descargables en el curso {course_id} "
+            f"para los módulos: {listed}."
+        )
+
+
+class IncompleteDownloadError(MooviError):
+    """El contenido recibido no coincide con el tamaño que anuncia Moodle."""
+
+    def __init__(self, expected: int, received: int) -> None:
+        self.expected = expected
+        self.received = received
+        super().__init__(
+            f"Descarga incompleta: se esperaban {expected} bytes "
+            f"y se recibieron {received}."
+        )
+
+
 class ApiError(MooviError):
     """Error devuelto por la API de Moodle."""
 

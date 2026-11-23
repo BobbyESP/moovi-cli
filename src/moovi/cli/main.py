@@ -14,6 +14,7 @@ from moovi.cli.commands import (
     assignments,
     auth,
     courses,
+    files,
     people,
 )
 from moovi.cli.context import build_services
@@ -70,6 +71,7 @@ def build_parser() -> argparse.ArgumentParser:
     people.register(subparsers, common)
     assignments.register(subparsers, common)
     announcements.register(subparsers, common)
+    files.register(subparsers, common)
     return parser
 
 

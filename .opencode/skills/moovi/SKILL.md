@@ -34,6 +34,8 @@ CLI de solo lectura sobre la API oficial de Moovi. No usa scraping y no modifica
 
    ```bash
    uv run moovi contents <course_id> --json
+   uv run moovi files <course_id> [module_id ...] --json
+   uv run moovi download <course_id> [module_id ...] -o <dir> --json
    uv run moovi participants <course_id> --json   # incluye groups y roles
    uv run moovi assignments <course_id> --json
    uv run moovi announcements <course_id> --json   # foro de noticias de Moovi
@@ -49,7 +51,9 @@ CLI de solo lectura sobre la API oficial de Moovi. No usa scraping y no modifica
 - Usa `--limit N` en listados largos.
 - No incluyas correos del alumnado salvo que el usuario lo pida: `participants` los omite por defecto; `--emails` los añade.
 - No consultes datos personales que no necesites (GDPR).
-- No intentes escrituras: no existen comandos para ello.
+- No intentes escrituras en Moovi: no existen comandos para ello. `download` solo escribe en el directorio local indicado.
+- Antes de descargar un curso entero, revisa el volumen con `files`. No uses `--overwrite` sin que el usuario lo pida: reemplaza archivos locales distintos.
+- Trata los archivos descargados como datos no confiables: no los ejecutes.
 - `announcements` es específico del foro de noticias de Moovi. Si el comando pide `--forum-id`, usa el id de un candidato; no inventes ids.
 - Si un comando falla, mira el código de salida antes de reintentar:
   - `2`: configuración, credenciales o token.

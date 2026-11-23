@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Literal
+
+DownloadStatus = Literal["downloaded", "skipped", "conflict", "failed"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -26,12 +29,25 @@ class Course:
 
 
 @dataclass(frozen=True, slots=True)
+class RemoteFile:
+    """Fichero alojado en Moodle, tal como lo describe su módulo."""
+
+    name: str
+    url: str
+    folder: str = ""
+    size: int = 0
+    modified: datetime | None = None
+    mime_type: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class Module:
     id: int
     name: str
     mod_name: str
     visible: bool
     url: str | None = None
+    files: tuple[RemoteFile, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -113,3 +129,29 @@ class AnnouncementContent:
     modified: datetime | None = None
     message_format: int = 1
     message: str = ""
+
+
+@dataclass(frozen=True, slots=True)
+class CourseFile:
+    """Fichero descargable de un curso y su ruta local relativa y segura."""
+
+    module_id: int
+    module_name: str
+    section_name: str
+    file: RemoteFile
+    path: str
+
+
+@dataclass(frozen=True, slots=True)
+class StoredFile:
+    """Metadatos de un fichero ya guardado en el destino."""
+
+    size: int
+    modified: datetime
+
+
+@dataclass(frozen=True, slots=True)
+class DownloadResult:
+    file: CourseFile
+    status: DownloadStatus
+    error: str | None = None

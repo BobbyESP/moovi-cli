@@ -30,13 +30,14 @@ La regla se comprueba automáticamente en `tests/unit/test_architecture.py`: si 
 ```
 src/moovi/
 ├── domain/
-│   ├── models.py      # SiteInfo, Course, Section, Module, Role, Participant, Assignment, Forum, Announcement
+│   ├── models.py      # SiteInfo, Course, Section, Module, RemoteFile, CourseFile, DownloadResult, Role, Participant, Assignment, Forum, Announcement
+│   ├── paths.py       # saneado de nombres remotos
 │   ├── values.py      # Token (repr redactado)
 │   └── errors.py      # errores de dominio
 ├── logic/
-│   ├── ports.py       # MoodleGateway, TokenStore (Protocol)
+│   ├── ports.py       # MoodleGateway, TokenStore, FileStore, ByteStream (Protocol)
 │   ├── session.py     # MoodleSession: token, login y reintento
-│   └── services/      # AuthService, CatalogService, PeopleService, AssignmentService, AnnouncementService
+│   └── services/      # AuthService, CatalogService, FileService, PeopleService, AssignmentService, AnnouncementService
 ├── network/
 │   ├── rest.py        # MoodleRestClient(MoodleGateway)
 │   ├── params.py      # flatten a notación Moodle
@@ -44,7 +45,8 @@ src/moovi/
 │   └── errors.py      # errorcode de Moodle → error de dominio
 ├── infra/
 │   ├── settings.py    # .env + entorno, validación de URL
-│   └── token_store.py # fichero 0600
+│   ├── token_store.py # fichero 0600
+│   └── file_store.py  # LocalFileStore(FileStore): escritura atómica
 └── cli/
     ├── main.py        # parser y composition root
     ├── context.py     # build_services()
@@ -128,6 +130,14 @@ class MoodleGateway(Protocol):
     def discussion_post(
         self, token: Token, post_id: int
     ) -> AnnouncementContent: ...
+    def open_file(self, token: Token, url: str) -> ByteStream: ...
+
+class FileStore(Protocol):
+    def stat(self, path: str) -> StoredFile | None: ...
+    def save(
+        self, path: str, source: ByteStream, *,
+        size: int | None = None, modified: datetime | None = None,
+    ) -> int: ...
 
 class TokenStore(Protocol):
     def load(self, site: str, username: str | None = None) -> Token | None: ...
@@ -140,6 +150,7 @@ class TokenStore(Protocol):
 - `MoodleRestClient(MoodleGateway)` es su **adaptador** REST.
 - `TokenStore` es el puerto de persistencia del token.
 - `FileTokenStore(TokenStore)` es su adaptador en fichero.
+- `FileStore` es el puerto del destino de las descargas; `LocalFileStore(FileStore)` es su adaptador en disco.
 - `MoodleSession` consume el puerto `MoodleGateway`; `cli/context.py` inyecta el adaptador.
 - Las implementaciones oficiales heredan explícitamente del `Protocol` para que la relación puerto/adaptador sea visible; el tipado sigue siendo estructural para los dobles de test.
 - Los tests unitarios sustituyen ambos puertos por dobles en memoria.
@@ -157,6 +168,10 @@ class TokenStore(Protocol):
 | `ApiError` | Cualquier otro `errorcode`. | 3 |
 | `NoAnnouncementsForumError` | La materia no tiene foro de noticias. | 2 |
 | `AmbiguousForumError` | Varios foros de noticias sin desempate. | 2 |
+| `UnknownModuleError` | El módulo pedido no existe o no tiene archivos. | 2 |
+| `IncompleteDownloadError` | El tamaño recibido no coincide con el anunciado. | 3 |
+
+Durante una descarga, los errores de un archivo se registran como resultado `failed` y el resto continúa; `moovi download` termina entonces con código 1. Un token inválido tras reintentar sí aborta la operación.
 
 Moodle devuelve **HTTP 200** en sus errores; el discriminante es `errorcode` (o `exception`). Esa traducción vive en `network/errors.py`.
 
@@ -177,9 +192,26 @@ Moodle devuelve **HTTP 200** en sus errores; el discriminante es `errorcode` (o 
 
 La lectura usa `mod_forum_get_forums_by_courses` y `mod_forum_get_forum_discussions`, ambas en la allowlist de solo lectura. El contenido de un anuncio se obtiene con `mod_forum_get_discussion_post` usando el id del post que muestra el listado. La publicación queda fuera de esta fase: sería `mod_forum_add_discussion` desde una superficie de escritura separada.
 
+## Descarga de archivos
+
+`FileService` separa la selección de la transferencia:
+
+```python
+files = service.list_files(course_id, module_ids=[678])    # sin efectos locales
+results = service.download(files, into=LocalFileStore(destino))
+```
+
+`iter_download` hace lo mismo de forma perezosa y produce cada `DownloadResult` al terminar ese archivo; la CLI lo usa para el progreso.
+
+- Solo se descargan entradas `type == "file"` de módulos `resource` y `folder`.
+- La ruta local es `sección/archivo` o `sección/carpeta/subruta/archivo`. Cada componente pasa por `domain/paths.py`, y `LocalFileStore` rechaza además cualquier ruta que salga del destino.
+- Las colisiones, incluidas las que solo difieren en mayúsculas, se resuelven añadiendo el id del módulo.
+- `open_file` envía el token por POST y solo a `<sitio>/webservice/pluginfile.php/`. Abre la conexión de forma anticipada para que `MoodleSession` pueda renovar el token.
+- El guardado usa un temporal y `os.replace`, verifica el tamaño y fija la fecha remota. Tamaño y fecha iguales significan `skipped`; si difieren, `conflict` salvo con `overwrite=True`.
+
 ## Modo de solo lectura
 
-`network/rest.py` declara `READ_ONLY_FUNCTIONS`. `MoodleRestClient.call()` rechaza cualquier función que no esté ahí, aunque un comando futuro la invoque por error. La CLI no expone ningún comando de escritura en esta fase.
+`network/rest.py` declara `READ_ONLY_FUNCTIONS`. `MoodleRestClient.call()` rechaza cualquier función que no esté ahí, aunque un comando futuro la invoque por error. La CLI no expone ningún comando de escritura en esta fase. `open_file` no pasa por `call` porque no invoca una función del servicio web: solo lee ficheros de `pluginfile.php`.
 
 Para añadir una función hay que hacerlo en tres sitios: la allowlist, el puerto y el adaptador, y el caso de uso. No hay atajo de `call` genérico.
 
