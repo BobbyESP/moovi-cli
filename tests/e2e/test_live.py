@@ -29,7 +29,7 @@ def test_live_whoami() -> None:
         cwd=str(ROOT),
         env={**os.environ, "PYTHONPATH": str(ROOT / "src")},
         capture_output=True,
-        text=True,
+        encoding="utf-8",
         timeout=60,
     )
 
@@ -45,7 +45,7 @@ def test_live_courses() -> None:
         cwd=str(ROOT),
         env={**os.environ, "PYTHONPATH": str(ROOT / "src")},
         capture_output=True,
-        text=True,
+        encoding="utf-8",
         timeout=60,
     )
 

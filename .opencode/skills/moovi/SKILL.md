@@ -9,37 +9,35 @@ CLI de solo lectura sobre la API oficial de Moovi. No usa scraping y no modifica
 
 ## Requisitos
 
-- La CLI `moovi` debe estar disponible en el entorno conda `moovi`.
-- Si cada comando se ejecuta en una shell nueva, no uses `conda activate`: usa
-  `conda run -n moovi --no-capture-output moovi ...`.
-- Debe haber un token válido en `~/.cache/moovi/token.json` (se crea con `moovi login`) o `MOOVI_TOKEN` en el entorno. `.env` solo necesita `MOOVI_URL` y, opcionalmente, `MOOVI_USER`.
+- Ejecuta la CLI con `uv run moovi ...` desde la raíz del repositorio. No hace falta activar ningún entorno, así que funciona igual en una shell nueva. Si `moovi` ya está en el `PATH` (entorno `.venv` activado o `uv tool install`), puedes llamarlo directamente.
+- Debe haber un token válido en `~/.cache/moovi/token.json` (se crea con `uv run moovi login`) o `MOOVI_TOKEN` en el entorno. `.env` solo necesita `MOOVI_URL` y, opcionalmente, `MOOVI_USER`.
 - Ejecuta desde la raíz del repositorio para que se lea `.env`, o exporta las variables `MOOVI_*`.
-- **Nunca pidas la contraseña por chat ni imprimas `.env` o el token.** Si no hay sesión, pide al usuario que ejecute `moovi login` en su terminal. No uses `--no-input` salvo que las credenciales ya estén en el entorno.
+- **Nunca pidas la contraseña por chat ni imprimas `.env` o el token.** Si no hay sesión, pide al usuario que ejecute `uv run moovi login` en su terminal, desde la raíz del repositorio. No uses `--no-input` salvo que las credenciales ya estén en el entorno.
 
 ## Flujo
 
 1. Comprueba la sesión:
 
    ```bash
-   moovi whoami --json
+   uv run moovi whoami --json
    ```
 
-   Si falla con “No hay sesión válida”, pide al usuario que ejecute `moovi login` en su terminal. No le pidas la contraseña.
+   Si falla con “No hay sesión válida”, pide al usuario que ejecute `uv run moovi login` en su terminal, desde la raíz del repositorio. No le pidas la contraseña.
 
 2. Localiza el curso por su shortname o nombre:
 
    ```bash
-   moovi courses --json
+   uv run moovi courses --json
    ```
 
 3. Consulta lo que pida el usuario:
 
    ```bash
-   moovi contents <course_id> --json
-   moovi participants <course_id> --json   # incluye groups y roles
-   moovi assignments <course_id> --json
-   moovi announcements <course_id> --json   # foro de noticias de Moovi
-   moovi announcement-content <announcement_id> --json
+   uv run moovi contents <course_id> --json
+   uv run moovi participants <course_id> --json   # incluye groups y roles
+   uv run moovi assignments <course_id> --json
+   uv run moovi announcements <course_id> --json   # foro de noticias de Moovi
+   uv run moovi announcement-content <announcement_id> --json
    ```
 
 4. Resume el resultado. No vuelques listados completos si basta con un resumen.

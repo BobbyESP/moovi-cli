@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "moovi"
-version = "0.1.0"
+dynamic = ["version"]
 description = "CLI de solo lectura para la API de Moovi (Moodle, Universidade de Vigo)"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -13,8 +13,22 @@ dependencies = []
 [project.scripts]
 moovi = "moovi.cli.main:main"
 
+# Dependencias de desarrollo (PEP 735). `uv sync` / `uv run` las instalan por defecto.
+# No forman parte del paquete publicado: no son dependencias en runtime.
+[dependency-groups]
+dev = [
+  "pytest>=8",
+]
+
+[tool.setuptools.dynamic]
+version = { attr = "moovi.__version__" }
+
 [tool.setuptools.packages.find]
 where = ["src"]
+
+# La versión vive en __init__.py: uv debe reconstruir los metadatos si cambia.
+[tool.uv]
+cache-keys = [{ file = "pyproject.toml" }, { file = "src/moovi/__init__.py" }]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
